@@ -43,5 +43,5 @@ int main(int argc, char* argv[]) {
         }
     }
     //Delete ClonesArray and histogram objects
-    //event->Finish();
+    event->Finish();
 }
