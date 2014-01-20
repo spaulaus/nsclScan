@@ -1,5 +1,5 @@
 #!/bin/make
-#SHELL=/bin/bash
+SHELL=/bin/bash
 
 #Define the virtual paths
 vpath %.cpp src/
@@ -17,10 +17,14 @@ c++SrcSuf = cpp
 PROGRAM = ex
 
 #Define Objects
-TESTO = ex.o
+DETECTORLIBRARYO = DetectorLibrary.o
+IDENTIFIERO      = Identifier.o
+MAINO            = ex.o
+MAPFILEO         = MapFile.o
 
 #Make the object list and prefix the object directory
-OBJS = $(TESTO)
+OBJS = $(DETECTORLIBRARYO) $(IDENTIFIERO) $(MAINO) $(MAPFILEO)
+
 OBJDIR = obj
 OBJS_W_DIR = $(addprefix $(OBJDIR)/,$(OBJS))
 
