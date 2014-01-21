@@ -16,6 +16,11 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
+    //Load in the ROOT tree from the ddasdumper
+    TFile file("/mnt/analysis/e13504/svp/rootFiles/test00.root");
+    TTree *tr = (TTree*)file.Get("dchan");
+    TBranch *br = tr->GetBranch("ddasevent");
+
     int numMods = 2;
     int numCh = numMods*16;
 
@@ -30,8 +35,6 @@ int main(int argc, char* argv[]) {
 
     vector<TH1F*> histos(numCh);
 
-    
-
     //Module 0 Histograms
     TH1F *csI = new TH1F("csI", "Energy Spectrum for M0C0", 32768,0,32768);
     TH1F *bmOn0 = new TH1F("bmOn0", "Energy Spectrum for M0C4", 32768,0,32768);
@@ -44,11 +47,6 @@ int main(int argc, char* argv[]) {
     TH1F *bmOff1 = new TH1F("bmOff1", "Energy Spectrum for M1C5", 32768,0,32768);
     TH1F *plsr1 = new TH1F("plsr1", "Energy Spectrum for M1C6", 32768,0,32768);
     
-    TFile file("/mnt/analysis/e13504/svp/rootFiles/test00.root");
-    TFile out("/mnt/analysis/e13504/svp/rootFiles/test00-sort.root", "RECREATE");
-    TTree *tr = (TTree*)file.Get("dchan");
-    TBranch *br = tr->GetBranch("ddasevent");
-
     DDASEvent *event = new DDASEvent(); 
     br->SetAddress(&event);
 
@@ -83,77 +81,19 @@ int main(int argc, char* argv[]) {
             if(id == 22)
                 plsr1->Fill(en);
         }
-        // if(cutoff == 1e1)
-        //     break;
     }
 
-    // //--------- Module 0 Histograms ---------
-    // TCanvas* c0 = new TCanvas("c0","",0,0,700,500);
-    // c0->cd();
-    // csI->GetXaxis()->SetTitle("Raw Energy");
-    // csI->GetYaxis()->SetTitle("Counts");
-    // csI->SetAxisRange(0,6000,"X");
-    // csI->SetAxisRange(0,35e3,"Y");
-    // csI->Draw();
-    // c0->SaveAs("pics/prelim/test00-m0c0.eps");
-    
-    // TCanvas* c1 = new TCanvas("c1","",0,0,700,500);
-    // c1->cd();
-    // bmOn0->GetXaxis()->SetTitle("Raw Energy");
-    // bmOn0->GetYaxis()->SetTitle("Counts");
-    // bmOn0->SetAxisRange(0,16532,"X");
-    // bmOn0->Draw();
-    // c1->SaveAs("pics/prelim/test00-m0c4.eps");
+    TFile out("/mnt/analysis/e13504/svp/rootFiles/test00-sort.root", 
+              "RECREATE");
+    csI->Write();
+    bmOn0->Write();
+    bmOff0->Write();
+    plsr0->Write();
 
-    // TCanvas* c2 = new TCanvas("c2","",0,0,700,500);
-    // c2->cd();
-    // bmOff0->GetXaxis()->SetTitle("Raw Energy");
-    // bmOff0->GetYaxis()->SetTitle("Counts");
-    // bmOff0->SetAxisRange(0,16532,"X");
-    // bmOff0->Draw();
-    // c2->SaveAs("pics/prelim/test00-m0c5.eps");
-
-    // TCanvas* c3 = new TCanvas("c3","",0,0,700,500);
-    // c3->cd();
-    // plsr0->GetXaxis()->SetTitle("Raw Energy");
-    // plsr0->GetYaxis()->SetTitle("Counts");
-    // plsr0->SetAxisRange(0,16532,"X");
-    // plsr0->Draw();
-    // c3->SaveAs("pics/prelim/test00-m0c6.eps");
-    
-    // //---------- Module 1 Histograms ----------
-    // TCanvas* c4 = new TCanvas("c4","",0,0,700,500);
-    // c4->cd();
-    // ge->GetXaxis()->SetTitle("Raw Energy");
-    // ge->GetYaxis()->SetTitle("Counts");
-    // ge->SetAxisRange(0,16532,"X");
-    // ge->SetAxisRange(0,250,"Y");
-    // ge->Draw();
-    // c4->SaveAs("pics/prelim/test00-m1c0.eps");
-
-    // TCanvas* c5 = new TCanvas("c5","",0,0,700,500);
-    // c5->cd();
-    // bmOn1->GetXaxis()->SetTitle("Raw Energy");
-    // bmOn1->GetYaxis()->SetTitle("Counts");
-    // bmOn1->SetAxisRange(0,16532,"X");
-    // bmOn1->Draw();
-    // c5->SaveAs("pics/prelim/test00-m1c4.eps");
-
-    // TCanvas* c6 = new TCanvas("c6","",0,0,700,500);
-    // c6->cd();
-    // bmOff1->GetXaxis()->SetTitle("Raw Energy");
-    // bmOff1->GetYaxis()->SetTitle("Counts");
-    // bmOff1->SetAxisRange(0,16532,"X");
-    // bmOff1->Draw();
-    // c6->SaveAs("pics/prelim/test00-m1c5.eps");
-
-    // TCanvas* c7 = new TCanvas("c7","",0,0,700,500);
-    // c7->cd();
-    // plsr1->GetXaxis()->SetTitle("Raw Energy");
-    // plsr1->GetYaxis()->SetTitle("Counts");
-    // plsr1->SetAxisRange(0,16532,"X");
-    // plsr1->Draw();
-    // c7->SaveAs("pics/prelim/test00-m1c6.eps");
+    ge->Write();
+    bmOn1->Write();
+    bmOff1->Write();
+    plsr1->Write(); 
 
     out.Write();
 }
