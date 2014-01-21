@@ -133,6 +133,7 @@ void DetectorLibrary::Set(int index, const Identifier& value)
     usedTypes.insert(value.GetType());
     usedSubtypes.insert(value.GetSubtype());
 
+    usedIds_.insert(index);
     identifiers_.at(index) = value;
 }
 
@@ -202,7 +203,11 @@ const set<string>& DetectorLibrary::GetKnownDetectors(void)
  */
 const set<string>& DetectorLibrary::GetUsedDetectors(void) const
 {
-    return usedTypes;
+    return(usedTypes);
+}
+
+const set<int>& DetectorLibrary::GetUsedIds(void) const {
+    return(usedIds_);
 }
 
 /**

@@ -33,6 +33,7 @@ public:
     const std::set<int> &GetLocations(const Identifier &id) const;
     const std::set<int> &GetLocations(const std::string &type, 
                                       const std::string &subtype) const;
+    const std::set<int> &GetUsedIds(void) const;
     const std::set<std::string>& GetKnownDetectors(void); 
     const std::set<std::string>& GetUsedDetectors(void) const;
 
@@ -61,6 +62,7 @@ private:
     unsigned int numModules;
     unsigned int numPhysicalModules;
     
+    std::set<int> usedIds_;
     std::set<std::string> knownDetectors;
     std::set<std::string> usedTypes;
     std::set<std::string> usedSubtypes;
