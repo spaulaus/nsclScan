@@ -22,6 +22,10 @@
 
 using namespace std;
 
+double CalcId(double &slot, double &ch) {
+    return((slot-2)*16 + ch);
+}
+
 int main(int argc, char* argv[]) {
     int numMods = 2;
     int numCh = numMods*16;
@@ -35,26 +39,39 @@ int main(int argc, char* argv[]) {
     
     set<int> usdIds = detLib.GetUsedIds();
     
-    std::map<int, TH1D*> eHstgrm;
+    std::map<int, TH1D*> eHstgrm, tHstgrm;
+    std::map<int, TH2D*> etHstgrm;
     for(const auto &i : usdIds) {
         Identifier chInfo = detLib.at(i);
-        stringstream name, title;
-        name << chInfo.GetType() << ":" << chInfo.GetSubtype() 
-             << ":" << i;
-        title << "Energy Spectrum for M" << detLib.ModuleFromIndex(i) 
+        stringstream eName, eTitle, etName, etTitle, tTitle, tName;
+        eName << chInfo.GetType() << ":" << chInfo.GetSubtype() 
+             << ":" << i << ":" << "RawEnergy";
+        eTitle << "Energy Spectrum for M" << detLib.ModuleFromIndex(i) 
               << "C" << detLib.ChannelFromIndex(i);
 
-        TH1D *hist = new TH1D(name.str().c_str(), title.str().c_str(), 32768, 0, 32768);
-        eHstgrm.insert(make_pair(i, hist));
+        tName << chInfo.GetType() << ":" << chInfo.GetSubtype() 
+             << ":" << i << ":" << "Rate";
+        tTitle << "Rate Spectrum for M" << detLib.ModuleFromIndex(i) 
+              << "C" << detLib.ChannelFromIndex(i);
+
+        TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(), 
+                               32768, 0, 32768);
+        TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(), 
+                               32768, 0, 32768);
+
+        eHstgrm.insert(make_pair(i, eHist));
+        tHstgrm.insert(make_pair(i, tHist));
     }
 
     vector<string> files = {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
                             "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
                             "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
     string outFile = "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-summed.root";
-
-    for(auto it : files) {
-        cout << "We are working on the following file, boss. " << it << endl;
+    
+    double fTime = 1855;
+    for(const auto &it : files) {
+        cout << "We are working on the following file, boss. " << endl
+             << it << endl;
 
         //Load in the ROOT tree from the ddasdumper
         TFile file(it.c_str());
@@ -70,22 +87,31 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < numEvent; i++) {
             br->GetEntry(i); 
             vector<ddaschannel*> evt = event->GetData();
-            for(auto j : evt) {
-                unsigned int sId  = j->GetSlotID();
-                unsigned int chId = j->GetChannelID();
-                unsigned int id = (sId-2)*16 + chId;
-                unsigned int en = j->GetEnergy();
-                unsigned int tLow = j->GetTimeLow();
-                unsigned int tHigh = j->GetTimeHigh();
-             
+            for(const auto &j : evt) {
+                double slot  = j->GetSlotID();
+                double chan = j->GetChannelID();
+                double id = CalcId(slot, chan);
+                double en = j->GetEnergy();
+                double time = j->GetTime();
+
+                //set the first time
+                if(i == 0 && j == evt.at(0) && it == files.at(0))
+                    fTime = time;
+                
+                //caluclate the time difference in seconds.
+                double tdiff = (time - fTime)*10.e-9; 
+                
                 eHstgrm.at(id)->Fill(en);
-            }
-        }
-    }//for over files
+                tHstgrm.at(id)->Fill(tdiff);
+            }//for(const auto j : evt)
+        }//for(int i = 0; i < numEvent
+    }//for(auto it : files)
 
     //Save the histograms to a root file
     TFile out(outFile.c_str(), "UPDATE");
-    for(const auto &id : usdIds)
+    for(const auto &id : usdIds) {
         eHstgrm.at(id)->Write();
+        tHstgrm.at(id)->Write();
+    }
     out.Write();
 }
