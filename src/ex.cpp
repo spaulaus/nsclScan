@@ -28,6 +28,20 @@ double CalcId(double &slot, double &ch) {
 }
 
 int main(int argc, char* argv[]) {
+    //The input and output files
+    // vector<string> files = 
+    //     {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
+    //      "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
+    //      "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+    vector<string> files = 
+        {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+    string outFile = 
+        "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-summed.root";
+
+    //Save the histograms to a root file
+    TFile *outF = new TFile(outFile.c_str(), "NEW");
+    //outF->SetCompressionLevel(4);
+
     int numMods = 2;
     int numCh = numMods*16;
 
@@ -56,9 +70,9 @@ int main(int argc, char* argv[]) {
               << "C" << detLib.ChannelFromIndex(i);
 
         TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(), 
-                               32768, 0, 32768.);
+                               8192, 0, 8192.);
         TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(), 
-                               5000, 0, 5000.);
+                               8192, 0, 8192.);
 
         eHstgrm.insert(make_pair(i, eHist));
         tHstgrm.insert(make_pair(i, tHist));
@@ -66,13 +80,7 @@ int main(int argc, char* argv[]) {
 
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M0C0",
-                              32000, 0, 32000., 5000, 0, 5000.);
-    
-    // vector<string> files = {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
-    //                         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
-    //                         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
-    vector<string> files = { "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
-    string outFile = "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-summed.root";
+                              8192, 0, 8192., 8192., 0, 8192.);
     
     //initialize the first time
     double fTime = 0;
@@ -93,7 +101,7 @@ int main(int argc, char* argv[]) {
         int cutoff = 0;
      
         for (int i = 0; i < numEvent; i++) {
-            if(i == 1000) 
+            if(i == 100)
                 break;
             br->GetEntry(i); 
             vector<ddaschannel*> evt = event->GetData();
@@ -111,32 +119,36 @@ int main(int argc, char* argv[]) {
                 //caluclate the time difference in seconds.
                 double tdiff = (time - fTime)*10.e-9; 
                 
-            
+                
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(tdiff);
                 if(id == 0)
                     etHstgrm->Fill(en,tdiff);
-
             }//for(const auto j : evt)
 
-            // out.cd();
-            // if(i % 100 == 0) {
-            //     for(const auto &id : usdIds) {
-            //         eHstgrm.at(id)->Write();
-            //         tHstgrm.at(id)->Write();
-            //     }
-            //     etHstgrm->Write();
-            //     out.Write();
-            // } 
+            outF->cd();
+            if(i % 100 == 0) {
+                cout << "Event Number : " << i << endl;
+                for(const auto &id : usdIds) {
+                    eHstgrm.at(id)->Write();
+                    tHstgrm.at(id)->Write();
+                }
+                etHstgrm->Write();
+                outF->Write();
+                outF->Flush();
+            }
         }//for(int i = 0; i < numEvent
+        file.Close();
     }//for(auto it : files)
  
-    //Save the histograms to a root file
-    TFile out(outFile.c_str(), "UPDATE");
+    outF->cd();
     for(const auto &id : usdIds) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
     etHstgrm->Write();
-    out.Write();
+    outF->Write();
+
+    outF->Close();
+    delete outF;
 }
