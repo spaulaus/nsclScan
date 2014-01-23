@@ -9,13 +9,13 @@
 # "virtual" tag indicates that this channel is not a physical channel
 #   but is generated dynamically onboard 
 MOD    CH      TYPE        SUBTYPE      LOCATION        TAGS
-0      0       csi         large                        uncal
-0      1       csi         small                        uncal
-0      2       nai         small                        uncal
+0      0       csi         large                        uncal 
+0      1       csi         small                        uncal nohis
+0      2       nai         small                        uncal nohis
 0-1    4       logic       beamOn                       uncal
 0-1    5       logic       beamOff                      uncal
-0-1    6       pulser      ignore                       uncal
-0-1    8       tdc         ignore                       uncal
+0-1    6       pulser      ignore                       uncal 
+0-1    8       tdc         ignore                       uncal nohis
 1      0       ge          ignore                       uncal
-1      1       ge          ignore                       uncal
-1      2       ge          ignore                       uncal
+1      1       ge          ignore                       uncal nohis
+1      2       ge          ignore                       uncal nohis

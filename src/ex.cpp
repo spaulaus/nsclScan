@@ -14,6 +14,7 @@
 #include <TTree.h>
 #include <TFile.h>
 #include <TH1D.h>
+#include <TH2D.h>
 
 #include "DDASEvent.h"
 #include "DetectorLibrary.hpp"
@@ -40,9 +41,9 @@ int main(int argc, char* argv[]) {
     set<int> usdIds = detLib.GetUsedIds();
     
     std::map<int, TH1D*> eHstgrm, tHstgrm;
-    std::map<int, TH2D*> etHstgrm;
     for(const auto &i : usdIds) {
         Identifier chInfo = detLib.at(i);
+
         stringstream eName, eTitle, etName, etTitle, tTitle, tName;
         eName << chInfo.GetType() << ":" << chInfo.GetSubtype() 
              << ":" << i << ":" << "RawEnergy";
@@ -55,20 +56,27 @@ int main(int argc, char* argv[]) {
               << "C" << detLib.ChannelFromIndex(i);
 
         TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(), 
-                               32768, 0, 32768);
+                               32768, 0, 32768.);
         TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(), 
-                               32768, 0, 32768);
+                               5000, 0, 5000.);
 
         eHstgrm.insert(make_pair(i, eHist));
         tHstgrm.insert(make_pair(i, tHist));
     }
 
-    vector<string> files = {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
-                            "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
-                            "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+    TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
+                              "Time vs Energy Spectrum for M0C0",
+                              32000, 0, 32000., 5000, 0, 5000.);
+    
+    // vector<string> files = {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
+    //                         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
+    //                         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+    vector<string> files = { "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
     string outFile = "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-summed.root";
     
-    double fTime = 1855;
+    //initialize the first time
+    double fTime = 0;
+    
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
              << it << endl;
@@ -85,6 +93,8 @@ int main(int argc, char* argv[]) {
         int cutoff = 0;
      
         for (int i = 0; i < numEvent; i++) {
+            if(i == 1000) 
+                break;
             br->GetEntry(i); 
             vector<ddaschannel*> evt = event->GetData();
             for(const auto &j : evt) {
@@ -101,17 +111,32 @@ int main(int argc, char* argv[]) {
                 //caluclate the time difference in seconds.
                 double tdiff = (time - fTime)*10.e-9; 
                 
+            
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(tdiff);
+                if(id == 0)
+                    etHstgrm->Fill(en,tdiff);
+
             }//for(const auto j : evt)
+
+            // out.cd();
+            // if(i % 100 == 0) {
+            //     for(const auto &id : usdIds) {
+            //         eHstgrm.at(id)->Write();
+            //         tHstgrm.at(id)->Write();
+            //     }
+            //     etHstgrm->Write();
+            //     out.Write();
+            // } 
         }//for(int i = 0; i < numEvent
     }//for(auto it : files)
-
+ 
     //Save the histograms to a root file
     TFile out(outFile.c_str(), "UPDATE");
     for(const auto &id : usdIds) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
+    etHstgrm->Write();
     out.Write();
 }

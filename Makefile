@@ -32,8 +32,8 @@ OBJS_W_DIR = $(addprefix $(OBJDIR)/,$(OBJS))
 ROOTCONFIG   := root-config
 CXXFLAGS     += $(shell $(ROOTCONFIG) --cflags)
 LDFLAGS      += $(shell $(ROOTCONFIG) --ldflags)
-#LDLIBS       += $(shell $(ROOTCONFIG) --libs)
-LDLIBS       += $(shell $(ROOTCONFIG) --libs) -lRooFit -lRooFitCore
+LDLIBS       += $(shell $(ROOTCONFIG) --libs)
+#LDLIBS       += $(shell $(ROOTCONFIG) --libs) -lRooFit -lRooFitCore
 
 .SUFFIXES: .$(c++SrcSuf)
 
