@@ -15,6 +15,16 @@
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TH3D.h>
+
+// #include <RooAddPdf.h>
+// #include <RooConstVar.h>
+// #include <RooDataSet.h>
+// #include <RooDouble.h>
+// #include <RooFitResult.h>
+// #include <RooFormulaVar.h>
+// #include <RooPlot.h>
+// #include <RooRealVar.h>
 
 #include "DDASEvent.h"
 #include "DetectorLibrary.hpp"
@@ -22,6 +32,7 @@
 #include "MapFile.hpp"
 
 using namespace std;
+//using namespace RooFit;
 
 double CalcId(double &slot, double &ch) {
     return((slot-2)*16 + ch);
@@ -29,18 +40,14 @@ double CalcId(double &slot, double &ch) {
 
 int main(int argc, char* argv[]) {
     //The input and output files
-    // vector<string> files = 
-    //     {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
-    //      "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
-    //      "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
     vector<string> files = 
-        {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+        {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
+         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
+         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+    // vector<string> files = 
+    //     {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
     string outFile = 
         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-summed.root";
-
-    //Save the histograms to a root file
-    TFile *outF = new TFile(outFile.c_str(), "NEW");
-    //outF->SetCompressionLevel(4);
 
     int numMods = 2;
     int numCh = numMods*16;
@@ -78,31 +85,44 @@ int main(int argc, char* argv[]) {
         tHstgrm.insert(make_pair(i, tHist));
     }
 
+    TH1D *bHist = new TH1D("csI:large:0:dTmsOff", "Tdiff w BeamOff", 
+                           12500, 0., 12500.);
+    TH1D *oHist = new TH1D("csI:large:0:dTmsOn", "Tdiff w BeamOn", 
+                           12500, 0., 12500.);
+
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M0C0",
-                              8192, 0, 8192., 8192., 0, 8192.);
-    
+                              8192, 0, 8192., 12000, 0, 12000.);
+    TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", 
+                              "Time vs Energy Spectrum for M1C0",
+                              8192, 0, 8192., 12000, 0, 12000.);
+
+    etHstgrm->SetContour(100.);
+    gtHstgrm->SetContour(100.);
+
+    //Define the data set for fitting 
+    // RooRealVar rootime("time","Decay time", 0.0, 0., 12000.);
+    // RooDataSet data("data","Fitting dataset", rootime);
+
     //initialize the first time
-    double fTime = 0;
+    double fTime = 0, bTime = 0, oTime = 0;;
     
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
              << it << endl;
 
         //Load in the ROOT tree from the ddasdumper
-        TFile file(it.c_str());
-        TTree *tr = (TTree*)file.Get("dchan");
+        TFile inFile(it.c_str());
+        TTree *tr = (TTree*)inFile.Get("dchan");
         TBranch *br = tr->GetBranch("ddasevent");
      
         DDASEvent *event = new DDASEvent(); 
         br->SetAddress(&event);
-     
         int numEvent = tr->GetEntries();
-        int cutoff = 0;
-     
+
         for (int i = 0; i < numEvent; i++) {
-            if(i == 100)
-                break;
+            // if(i == 1000)
+            //     break;
             br->GetEntry(i); 
             vector<ddaschannel*> evt = event->GetData();
             for(const auto &j : evt) {
@@ -116,39 +136,49 @@ int main(int argc, char* argv[]) {
                 if(i == 0 && j == evt.at(0) && it == files.at(0))
                     fTime = time;
                 
-                //caluclate the time difference in seconds.
+                //set the latest beam off time
+                if(id == 5)
+                    bTime = time;
+                if(id == 4)
+                    oTime = time;
+    
+                //caluclate the Run Time in seconds.
                 double tdiff = (time - fTime)*10.e-9; 
-                
-                
+                //Caluclate the time difference in ms.
+                double btdiff = (time - bTime)*10.e-6; 
+                double btdiff1 = (time - oTime)*10.e-6; 
+
+                //Stuff related to only the CsI
+                if(id == 0) {
+                    bHist->Fill(btdiff);
+                    oHist->Fill(btdiff1);
+                    etHstgrm->Fill(en/4.,btdiff1);
+                    // rootime.setVal(btdiff1);
+                    // data.add(RooArgList(rootime));
+                }
+                if(id == 16) {
+                    gtHstgrm->Fill(en/4.,btdiff1);
+                }
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(tdiff);
-                if(id == 0)
-                    etHstgrm->Fill(en,tdiff);
             }//for(const auto j : evt)
-
-            outF->cd();
-            if(i % 100 == 0) {
-                cout << "Event Number : " << i << endl;
-                for(const auto &id : usdIds) {
-                    eHstgrm.at(id)->Write();
-                    tHstgrm.at(id)->Write();
-                }
-                etHstgrm->Write();
-                outF->Write();
-                outF->Flush();
-            }
         }//for(int i = 0; i < numEvent
-        file.Close();
+        inFile.Close();
     }//for(auto it : files)
  
-    outF->cd();
+    //Save the histograms to a root file
+    TFile outF(outFile.c_str(), "RECREATE");
     for(const auto &id : usdIds) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
-    etHstgrm->Write();
-    outF->Write();
+    bHist->Write();
+    oHist->Write();
 
-    outF->Close();
-    delete outF;
+    etHstgrm->Write();
+    gtHstgrm->Write();
+    
+    outF.Write();
+
+    
 }
