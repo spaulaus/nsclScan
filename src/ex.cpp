@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
 
     int numMods = 2;
     int numCh = numMods*16;
+    double energyContraction = 4.;
 
     //Initialize the Detector Library
     DetectorLibrary detLib(numCh);
@@ -77,27 +78,26 @@ int main(int argc, char* argv[]) {
               << "C" << detLib.ChannelFromIndex(i);
 
         TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(), 
-                               8192, 0, 8192.);
+                               8192, 0., 8192.);
         TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(), 
-                               8192, 0, 8192.);
+                               8192, 0., 8192.);
 
         eHstgrm.insert(make_pair(i, eHist));
         tHstgrm.insert(make_pair(i, tHist));
     }
 
     TH1D *bHist = new TH1D("csI:large:0:dTmsOff", "Tdiff w BeamOff", 
-                           12500, 0., 12500.);
+                           1.2e5, 0., 12.);
     TH1D *oHist = new TH1D("csI:large:0:dTmsOn", "Tdiff w BeamOn", 
-                           12500, 0., 12500.);
+                           1.2e5, 0., 12.);
 
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M0C0",
-                              8192, 0, 8192., 12000, 0, 12000.);
+                              8192, 0., 8192., 1.2e5, 0., 12.);
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M1C0",
-                              8192, 0, 8192., 12000, 0, 12000.);
+                              8192, 0., 8192., 1.2e5, 0., 12.);
 
-    etHstgrm->SetContour(100.);
     gtHstgrm->SetContour(100.);
 
     //Define the data set for fitting 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
     // RooDataSet data("data","Fitting dataset", rootime);
 
     //initialize the first time
-    double fTime = 0, bTime = 0, oTime = 0;;
+    double firstTime = 0, onTime = 0, offTime = 0;
     
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
@@ -129,38 +129,35 @@ int main(int argc, char* argv[]) {
                 double slot  = j->GetSlotID();
                 double chan = j->GetChannelID();
                 double id = CalcId(slot, chan);
-                double en = j->GetEnergy();
+                double en = j->GetEnergy() / energyContraction;
                 double time = j->GetTime();
 
-                //set the first time
+                //set the various times
                 if(i == 0 && j == evt.at(0) && it == files.at(0))
-                    fTime = time;
-                
-                //set the latest beam off time
+                    firstTime = time;
                 if(id == 5)
-                    bTime = time;
+                    offTime = time;
                 if(id == 4)
-                    oTime = time;
+                    onTime = time;
     
                 //caluclate the Run Time in seconds.
-                double tdiff = (time - fTime)*10.e-9; 
-                //Caluclate the time difference in ms.
-                double btdiff = (time - bTime)*10.e-6; 
-                double btdiff1 = (time - oTime)*10.e-6; 
+                double runTime = (time - firstTime)*10.e-9; 
+                double timeBoff = (time - offTime)*10.e-9; 
+                double timeBon = (time - onTime)*10.e-9; 
 
                 //Stuff related to only the CsI
                 if(id == 0) {
-                    bHist->Fill(btdiff);
-                    oHist->Fill(btdiff1);
-                    etHstgrm->Fill(en/4.,btdiff1);
-                    // rootime.setVal(btdiff1);
+                    bHist->Fill(timeBoff);
+                    oHist->Fill(timeBon);
+                    etHstgrm->Fill(en,timeBon);
+                    // rootime.setVal(timeBon);
                     // data.add(RooArgList(rootime));
                 }
                 if(id == 16) {
-                    gtHstgrm->Fill(en/4.,btdiff1);
+                    gtHstgrm->Fill(en,timeBon);
                 }
                 eHstgrm.at(id)->Fill(en);
-                tHstgrm.at(id)->Fill(tdiff);
+                tHstgrm.at(id)->Fill(runTime);
             }//for(const auto j : evt)
         }//for(int i = 0; i < numEvent
         inFile.Close();
@@ -174,11 +171,8 @@ int main(int argc, char* argv[]) {
     }
     bHist->Write();
     oHist->Write();
-
     etHstgrm->Write();
     gtHstgrm->Write();
     
     outF.Write();
-
-    
 }
