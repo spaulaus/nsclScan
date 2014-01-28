@@ -86,19 +86,17 @@ int main(int argc, char* argv[]) {
         tHstgrm.insert(make_pair(i, tHist));
     }
 
-    TH1D *bHist = new TH1D("csI:large:0:dTmsOff", "Tdiff w BeamOff", 
-                           1.2e5, 0., 12.);
-    TH1D *oHist = new TH1D("csI:large:0:dTmsOn", "Tdiff w BeamOn", 
-                           1.2e5, 0., 12.);
+    TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff", 
+                           1.2e4, 0., 12.);
+    TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn", 
+                           1.2e4, 0., 12.);
 
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M0C0",
-                              8192, 0., 8192., 1.2e5, 0., 12.);
+                              8192, 0., 8192., 1.2e4, 0., 12.);
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M1C0",
-                              8192, 0., 8192., 1.2e5, 0., 12.);
-
-    gtHstgrm->SetContour(100.);
+                              8192, 0., 8192., 1.2e4, 0., 12.);
 
     //Define the data set for fitting 
     // RooRealVar rootime("time","Decay time", 0.0, 0., 12000.);
