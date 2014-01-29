@@ -144,14 +144,14 @@ int main(int argc, char* argv[]) {
                 double timeBon = (time - onTime)*10.e-9; 
 
                 //Stuff related to only the CsI
-                if(id == 0) {
+                if(id == 0 && offTime != 0 && onTime != 0) {
                     bHist->Fill(timeBoff);
                     oHist->Fill(timeBon);
                     etHstgrm->Fill(en,timeBon);
                     // rootime.setVal(timeBon);
                     // data.add(RooArgList(rootime));
                 }
-                if(id == 16) {
+                if(id == 16 && onTime != 0) {
                     gtHstgrm->Fill(en,timeBon);
                 }
                 eHstgrm.at(id)->Fill(en);
