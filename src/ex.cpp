@@ -10,21 +10,10 @@
 #include <string>
 #include <vector>
 
-#include <TCanvas.h>
 #include <TTree.h>
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include <TH3D.h>
-
-// #include <RooAddPdf.h>
-// #include <RooConstVar.h>
-// #include <RooDataSet.h>
-// #include <RooDouble.h>
-// #include <RooFitResult.h>
-// #include <RooFormulaVar.h>
-// #include <RooPlot.h>
-// #include <RooRealVar.h>
 
 #include "DDASEvent.h"
 #include "DetectorLibrary.hpp"
@@ -32,10 +21,16 @@
 #include "MapFile.hpp"
 
 using namespace std;
-//using namespace RooFit;
 
-double CalcId(double &slot, double &ch) {
+double CalcId(const double &slot, const double &ch) {
     return((slot-2)*16 + ch);
+}
+
+double CalGe(const double &en) {
+    double m = 0.17065;
+    double b = 1.4821;
+    double calEn = m*en+b;
+    return(calEn);
 }
 
 int main(int argc, char* argv[]) {
@@ -90,17 +85,15 @@ int main(int argc, char* argv[]) {
                            1.2e4, 0., 12.);
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn", 
                            1.2e4, 0., 12.);
-
+    TH1D *geCal = new TH1D("ge:ignore:16:CalEn", "Calibrated Ge",
+                           8192,0.,8192.);
+    
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M0C0",
                               8192, 0., 8192., 1.2e4, 0., 12.);
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", 
-                              "Time vs Energy Spectrum for M1C0",
+                              "Time vs Cal Energy Spectrum for M1C0",
                               8192, 0., 8192., 1.2e4, 0., 12.);
-
-    //Define the data set for fitting 
-    // RooRealVar rootime("time","Decay time", 0.0, 0., 12000.);
-    // RooDataSet data("data","Fitting dataset", rootime);
 
     //initialize the first time
     double firstTime = 0, onTime = 0, offTime = 0;
@@ -148,11 +141,11 @@ int main(int argc, char* argv[]) {
                     bHist->Fill(timeBoff);
                     oHist->Fill(timeBon);
                     etHstgrm->Fill(en,timeBon);
-                    // rootime.setVal(timeBon);
-                    // data.add(RooArgList(rootime));
                 }
                 if(id == 16 && onTime != 0) {
-                    gtHstgrm->Fill(en,timeBon);
+                    double calEn = CalGe(en*energyContraction);
+                    gtHstgrm->Fill(calEn,timeBon);
+                    geCal->Fill(calEn);
                 }
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(runTime);
@@ -168,6 +161,7 @@ int main(int argc, char* argv[]) {
         tHstgrm.at(id)->Write();
     }
     bHist->Write();
+    geCal->Write();
     oHist->Write();
     etHstgrm->Write();
     gtHstgrm->Write();

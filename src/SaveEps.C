@@ -24,10 +24,12 @@
     c1->SaveAs("pics/rates/csi-run145.eps");
 
     h0 = (TH1D*)f.Get("csI:large:0:dtOff;1");
+    h0->SetLineColor(kBlack);
     h0->Draw();
     c1->SaveAs("pics/cycles/csiOff-run145.eps");
 
     h0 = (TH1D*)f.Get("csI:large:0:dtOn;1");
+    h0->SetLineColor(kBlack);
     h0->Draw();
     c1->SaveAs("pics/cycles/csiOn-run145.eps");
 
@@ -38,6 +40,12 @@
     h0->Draw();
     c1->SaveAs("pics/energy/geRaw-run145.eps");
     
+    h0 = (TH1D*)f.Get("ge:ignore:16:CalEn;1");
+    h0->SetLineColor(kBlack);
+    h0->SetAxisRange(0,2000,"X");
+    h0->Draw();
+    c1->SaveAs("pics/energy/geCal-run145.eps");
+
     h0 = (TH1D*)f.Get("ge:ignore:16:Rate;1");
     h0->SetAxisRange(0,4000,"X");
     h0->SetLineColor(kBlack);
