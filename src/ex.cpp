@@ -4,6 +4,7 @@
  *  \author S. V. Paulauskas
  *  \date 15 January 2014
  */
+
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -36,13 +37,13 @@ double CalGe(const double &en) {
 int main(int argc, char* argv[]) {
     //The input and output files
     vector<string> files = 
-        {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-00.root",
-         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-01.root",
-         "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+        {"/mnt/analysis/e13504/rootFiles/run145/run-0145-00.root",
+         "/mnt/analysis/e13504/rootFiles/run145/run-0145-01.root",
+         "/mnt/analysis/e13504/rootFiles/run145/run-0145-02.root"};
     // vector<string> files = 
-    //     {"/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-02.root"};
+    //     {"/mnt/analysis/e13504/rootFiles/run145/run-0145-02.root"};
     string outFile = 
-        "/mnt/analysis/e13504/svp/rootFiles/run145/run-0145-summed.root";
+        "/mnt/analysis/e13504/svp/analysis/data/run145/run-0145-summed.root";
 
     int numMods = 2;
     int numCh = numMods*16;
@@ -82,18 +83,20 @@ int main(int argc, char* argv[]) {
     }
 
     TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff", 
-                           1.2e4, 0., 12.);
+                           1.3e4, 0., 13.);
+    TH1D *tHist1 = new TH1D("csI:large:0:SingleCycle", "CPmS",
+                               1.3e4, 0., 1.3e4);
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn", 
-                           1.2e4, 0., 12.);
+                           1.3e4, 0., 13.);
     TH1D *geCal = new TH1D("ge:ignore:16:CalEn", "Calibrated Ge",
                            8192,0.,8192.);
     
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
                               "Time vs Energy Spectrum for M0C0",
-                              8192, 0., 8192., 1.2e4, 0., 12.);
+                              8192, 0., 8192., 1.3e4, 0., 13.);
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", 
                               "Time vs Cal Energy Spectrum for M1C0",
-                              8192, 0., 8192., 1.2e4, 0., 12.);
+                              8192, 0., 8192., 1.3e4, 0., 13.);
 
     //initialize the first time
     double firstTime = 0, onTime = 0, offTime = 0;
@@ -149,6 +152,7 @@ int main(int argc, char* argv[]) {
                 }
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(runTime);
+                tHist1->Fill(runTime*1000.);
             }//for(const auto j : evt)
         }//for(int i = 0; i < numEvent
         inFile.Close();
@@ -163,8 +167,9 @@ int main(int argc, char* argv[]) {
     bHist->Write();
     geCal->Write();
     oHist->Write();
+    tHist1->Write();
     etHstgrm->Write();
     gtHstgrm->Write();
-    
     outF.Write();
+    cout << "Finishing up" << endl;
 }
