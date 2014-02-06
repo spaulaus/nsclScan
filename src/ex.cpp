@@ -37,6 +37,7 @@ double CalGe(const double &en) {
 int main(int argc, char* argv[]) {
     //The input and output files
     vector<string> files = 
+        //{"/mnt/analysis/e13504/rootFiles/run220/run-0220-00.root"};
         {"/mnt/analysis/e13504/rootFiles/run145/run-0145-00.root",
          "/mnt/analysis/e13504/rootFiles/run145/run-0145-01.root",
          "/mnt/analysis/e13504/rootFiles/run145/run-0145-02.root"};
@@ -76,7 +77,7 @@ int main(int argc, char* argv[]) {
         TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(), 
                                8192, 0., 8192.);
         TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(), 
-                               8192, 0., 8192.);
+                               5000, 0., 5000.);
 
         eHstgrm.insert(make_pair(i, eHist));
         tHstgrm.insert(make_pair(i, tHist));
@@ -84,8 +85,8 @@ int main(int argc, char* argv[]) {
 
     TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff", 
                            1.3e4, 0., 13.);
-    TH1D *tHist1 = new TH1D("csI:large:0:SingleCycle", "CPmS",
-                               1.3e4, 0., 1.3e4);
+    TH1D *tHist1 = new TH1D("csI:large:0:cpms", "CPmS",
+                            5.e6, 0., 5.e3);
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn", 
                            1.3e4, 0., 13.);
     TH1D *geCal = new TH1D("ge:ignore:16:CalEn", "Calibrated Ge",
@@ -97,9 +98,11 @@ int main(int argc, char* argv[]) {
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", 
                               "Time vs Cal Energy Spectrum for M1C0",
                               8192, 0., 8192., 1.3e4, 0., 13.);
-
+    
     //initialize the first time
     double firstTime = 0, onTime = 0, offTime = 0;
+    bool isCycle = false;
+    vector<double> csiE, csiT;
     
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
@@ -131,19 +134,26 @@ int main(int argc, char* argv[]) {
                     firstTime = time;
                 if(id == 5)
                     offTime = time;
-                if(id == 4)
+                if(id == 4) {
                     onTime = time;
-    
+                    for(unsigned int i = 0; i < csiE.size(); i++)
+                        etHstgrm->Fill(csiE.at(i), csiT.at(i));
+                    csiE.clear();
+                    csiT.clear();
+                }
+
                 //caluclate the Run Time in seconds.
                 double runTime = (time - firstTime)*10.e-9; 
                 double timeBoff = (time - offTime)*10.e-9; 
                 double timeBon = (time - onTime)*10.e-9; 
 
                 //Stuff related to only the CsI
-                if(id == 0 && offTime != 0 && onTime != 0) {
+                if(id == 0 && onTime != 0) {
                     bHist->Fill(timeBoff);
                     oHist->Fill(timeBon);
-                    etHstgrm->Fill(en,timeBon);
+                    csiE.push_back(en);
+                    csiT.push_back(timeBon);
+                    //etHstgrm->Fill(en,timeBon);
                 }
                 if(id == 16 && onTime != 0) {
                     double calEn = CalGe(en*energyContraction);
@@ -152,7 +162,8 @@ int main(int argc, char* argv[]) {
                 }
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(runTime);
-                tHist1->Fill(runTime*1000.);
+                if(onTime != 0 && runTime < 1463 && runTime > 1450)
+                    tHist1->Fill(runTime);
             }//for(const auto j : evt)
         }//for(int i = 0; i < numEvent
         inFile.Close();
