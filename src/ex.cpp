@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -35,16 +36,15 @@ double CalGe(const double &en) {
 }
 
 int main(int argc, char* argv[]) {
-    //The input and output files
-    vector<string> files = 
-        //{"/mnt/analysis/e13504/rootFiles/run220/run-0220-00.root"};
-        {"/mnt/analysis/e13504/rootFiles/run145/run-0145-00.root",
-         "/mnt/analysis/e13504/rootFiles/run145/run-0145-01.root",
-         "/mnt/analysis/e13504/rootFiles/run145/run-0145-02.root"};
-    // vector<string> files = 
-    //     {"/mnt/analysis/e13504/rootFiles/run145/run-0145-02.root"};
-    string outFile = 
-        "/mnt/analysis/e13504/svp/analysis/data/run145/run-0145-summed.root";
+	if(argc < 3) {
+		cerr << "Usage : ./ex <input> <output>" << endl;
+		exit(2);
+	}
+
+	set<string> files;
+	for(int i = 1; i < argc-1; i++)
+		files.insert(argv[i]);
+	string outFile = argv[argc-1];
 
     int numMods = 2;
     int numCh = numMods*16;
@@ -53,57 +53,56 @@ int main(int argc, char* argv[]) {
     //Initialize the Detector Library
     DetectorLibrary detLib(numCh);
 
-    //Read the indicated map file and populate the Detector Library with 
+    //Read the indicated map file and populate the Detector Library with
     //the known detectors
     MapFile map(detLib, "src/map.txt");
-    
+
     set<int> usdIds = detLib.GetUsedIds();
-    
+
     std::map<int, TH1D*> eHstgrm, tHstgrm;
     for(const auto &i : usdIds) {
         Identifier chInfo = detLib.at(i);
 
         stringstream eName, eTitle, etName, etTitle, tTitle, tName;
-        eName << chInfo.GetType() << ":" << chInfo.GetSubtype() 
+        eName << chInfo.GetType() << ":" << chInfo.GetSubtype()
              << ":" << i << ":" << "RawEnergy";
-        eTitle << "Energy Spectrum for M" << detLib.ModuleFromIndex(i) 
+        eTitle << "Energy Spectrum for M" << detLib.ModuleFromIndex(i)
               << "C" << detLib.ChannelFromIndex(i);
 
-        tName << chInfo.GetType() << ":" << chInfo.GetSubtype() 
+        tName << chInfo.GetType() << ":" << chInfo.GetSubtype()
              << ":" << i << ":" << "Rate";
-        tTitle << "Rate Spectrum for M" << detLib.ModuleFromIndex(i) 
+        tTitle << "Rate Spectrum for M" << detLib.ModuleFromIndex(i)
               << "C" << detLib.ChannelFromIndex(i);
 
-        TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(), 
+        TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
                                8192, 0., 8192.);
-        TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(), 
+        TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(),
                                5000, 0., 5000.);
 
         eHstgrm.insert(make_pair(i, eHist));
         tHstgrm.insert(make_pair(i, tHist));
     }
 
-    TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff", 
+    TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff",
                            1.3e4, 0., 13.);
     TH1D *tHist1 = new TH1D("csI:large:0:cpms", "CPmS",
                             5.e6, 0., 5.e3);
-    TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn", 
+    TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn",
                            1.3e4, 0., 13.);
     TH1D *geCal = new TH1D("ge:ignore:16:CalEn", "Calibrated Ge",
                            8192,0.,8192.);
-    
-    TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", 
+
+    TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy",
                               "Time vs Energy Spectrum for M0C0",
                               8192, 0., 8192., 1.3e4, 0., 13.);
-    TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", 
+    TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy",
                               "Time vs Cal Energy Spectrum for M1C0",
                               8192, 0., 8192., 1.3e4, 0., 13.);
-    
+
     //initialize the first time
     double firstTime = 0, onTime = 0, offTime = 0;
-    bool isCycle = false;
     vector<double> csiE, csiT;
-    
+
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
              << it << endl;
@@ -112,15 +111,15 @@ int main(int argc, char* argv[]) {
         TFile inFile(it.c_str());
         TTree *tr = (TTree*)inFile.Get("dchan");
         TBranch *br = tr->GetBranch("ddasevent");
-     
-        DDASEvent *event = new DDASEvent(); 
+
+        DDASEvent *event = new DDASEvent();
         br->SetAddress(&event);
         int numEvent = tr->GetEntries();
 
         for (int i = 0; i < numEvent; i++) {
             // if(i == 1000)
             //     break;
-            br->GetEntry(i); 
+            br->GetEntry(i);
             vector<ddaschannel*> evt = event->GetData();
             for(const auto &j : evt) {
                 double slot  = j->GetSlotID();
@@ -130,7 +129,7 @@ int main(int argc, char* argv[]) {
                 double time = j->GetTime();
 
                 //set the various times
-                if(i == 0 && j == evt.at(0) && it == files.at(0))
+                if(i == 0 && j == evt.at(0) && it == *files.begin())
                     firstTime = time;
                 if(id == 5)
                     offTime = time;
@@ -143,9 +142,9 @@ int main(int argc, char* argv[]) {
                 }
 
                 //caluclate the Run Time in seconds.
-                double runTime = (time - firstTime)*10.e-9; 
-                double timeBoff = (time - offTime)*10.e-9; 
-                double timeBon = (time - onTime)*10.e-9; 
+                double runTime = (time - firstTime)*10.e-9;
+                double timeBoff = (time - offTime)*10.e-9;
+                double timeBon = (time - onTime)*10.e-9;
 
                 //Stuff related to only the CsI
                 if(id == 0 && onTime != 0) {
@@ -168,7 +167,7 @@ int main(int argc, char* argv[]) {
         }//for(int i = 0; i < numEvent
         inFile.Close();
     }//for(auto it : files)
- 
+
     //Save the histograms to a root file
     TFile outF(outFile.c_str(), "RECREATE");
     for(const auto &id : usdIds) {

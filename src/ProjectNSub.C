@@ -22,6 +22,6 @@
 
     TH1D *tot = sub1;
     tot->Add(sub2,1);
-    tot->SetAxisRange(1,2000,"X");
+    tot->SetAxisRange(1,1600,"X");
     tot->Draw();
 }
