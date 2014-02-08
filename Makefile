@@ -1,6 +1,12 @@
 #!/bin/make
 SHELL=/bin/bash
 
+#If you want RooFit functionality uncomment the following line
+#USEROOFIT = 1
+
+#path for ddasdumper
+DUMPER=/user/paulausk/programs/ddasdumper
+
 #Define the virtual paths
 vpath %.cpp src/
 vpath %.hpp inc/
@@ -9,12 +15,12 @@ vpath %.o obj/
 #Set some of the compile options
 CXX = g++
 CXXFLAGS = -fPIC -g -std=c++11 -Wall $(CINCLUDEDIRS)
-LDLIBS = -ldl -lpthread -L/mnt/analysis/e13504/svp/ddasdumper -lddaschannel
-CINCLUDEDIRS = -Iinc
+LDLIBS = -ldl -lpthread -L$(DUMPER) -lddaschannel
+CINCLUDEDIRS = -Iinc -I$(DUMPER)/
 c++SrcSuf = cpp
 
 #Set the name of the program to be compiled
-PROGRAM = ex
+PROGRAM = he6scan
 
 #Define Objects
 DETECTORLIBRARYO = DetectorLibrary.o
@@ -33,8 +39,9 @@ ROOTCONFIG   := root-config
 CXXFLAGS     += $(shell $(ROOTCONFIG) --cflags)
 LDFLAGS      += $(shell $(ROOTCONFIG) --ldflags)
 LDLIBS       += $(shell $(ROOTCONFIG) --libs)
-#LDLIBS       += $(shell $(ROOTCONFIG) --libs) -lRooFit -lRooFitCore
-
+ifeq ($(USEROOFIT),1)
+LDLIBS      += -lRooFit -lRooFitCore
+endif
 .SUFFIXES: .$(c++SrcSuf)
 
 all: $(OBJS_W_DIR) $(PROGRAM)

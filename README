@@ -1,0 +1,51 @@
+************************************************************
+*  Analysis software for the 6He experiment                *
+*  Author : S. V. Paulauskas                               *
+*  Date   : Jan-Feb 2014                                   *
+************************************************************
+
+********** General Information **********
+This software is intended to provide a general method for extracting 
+information from root files created via the ddasdumper program. 
+Currently, the only tested version of the ddasdumper is v2.0. 
+
+In addition, this program requires linking against a version of ROOT, 
+and uses standard ROOT libraries/headers. The current tested versions 
+of root are 5.34.14a and 5.34.14 (available under the module lists in 
+fishtank).
+
+Finally, this code uses some source files from the pixie_scan program. 
+This program was developed at the University of Tennessee at Knoxville, 
+and has been modified by the author for the current needs. These parts of 
+the source may not be redistributed without the accompnaying header and 
+are licensed under the GNU GPL v3. 
+
+********** Usage **********
+In order to use the program, one needs to point the Makefile to the user's
+installation of the ddasdumper program. 
+
+The user should then setup a "map.txt" file in the src directory. 
+This file lets the program know what detector type it has, as well as 
+what channels of Pixie those detectors were plugged into. 
+
+Running the file requires both input and output files. There may be multiple 
+input files defined; however only one output file is recognized. All of the 
+input files will be scanned into a single output file. 
+
+> he6scan <inputFile(s)> <outputFile>
+
+********** Other Files **********
+Other files are included as my attempts to learn ROOT, and perform various 
+handy functions. A quick break down follows; 
+
+fitDky.gp : A gnuplot script to fit the decay curve.
+PlotHistogram.C : An attempt to plot specific histograms from the output.
+ProjectNSub.C : Performs projections of the Time vs. Energy spectra and 
+                does the background subtraction before plotting.
+SaveEps.C : Saves the various histograms to eps and jpg (only 2d) files. 
+Simp.C : A macro version of the compiled code. The user should point the
+         script to the proper location of the ddasdumper code and ensure 
+         the ddasdumper has been compiled with the same version of ROOT.
+
+********** Questions? Comments? **********
+Contact : stanpaulauskas@gmail.com
