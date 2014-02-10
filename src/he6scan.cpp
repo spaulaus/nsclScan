@@ -136,6 +136,10 @@ int main(int argc, char* argv[]) {
                 mult->Fill(evt.size());
                 hits->Fill(id);
 
+                //Continue through event if the id is not in the used list
+                if(usdIds.find(id) == usdIds.end())
+                    continue;
+
                 //set the various times
                 if(i == 0 && j == evt.at(0) && it == *files.begin())
                     firstTime = time;
