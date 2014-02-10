@@ -25,7 +25,7 @@ PROGRAM = he6scan
 #Define Objects
 DETECTORLIBRARYO = DetectorLibrary.o
 IDENTIFIERO      = Identifier.o
-MAINO            = ex.o
+MAINO            = he6scan.o
 MAPFILEO         = MapFile.o
 
 #Make the object list and prefix the object directory

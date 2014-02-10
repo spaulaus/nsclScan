@@ -1,10 +1,11 @@
-************************************************************
-*  Analysis software for the 6He experiment                *
-*  Author : S. V. Paulauskas                               *
-*  Date   : Jan-Feb 2014                                   *
-************************************************************
+Brief Info
+=====================================
+Analysis software for the 6He experiment
+Author : S. V. Paulauskas
+Date   : Jan-Feb 2014
 
-********** General Information **********
+General Information
+=======================================
 This software is intended to provide a general method for extracting 
 information from root files created via the ddasdumper program. 
 Currently, the only tested version of the ddasdumper is v2.0. 
@@ -20,7 +21,8 @@ and has been modified by the author for the current needs. These parts of
 the source may not be redistributed without the accompnaying header and 
 are licensed under the GNU GPL v3. 
 
-********** Usage **********
+Usage
+=======================================
 In order to use the program, one needs to point the Makefile to the user's
 installation of the ddasdumper program. 
 
@@ -32,26 +34,30 @@ Running the file requires both input and output files. There may be multiple
 input files defined; however only one output file is recognized. All of the 
 input files will be scanned into a single output file. 
 
-> he6scan <inputFile(s)> <outputFile>
+    he6scan <inputFile(s)> <outputFile>
 
-********** Other Files **********
+Other Files
+=======================================
 Other files are included as my attempts to learn ROOT, and perform various 
 handy functions. A quick break down follows; 
 
-run.bash : A bash script to run multiple runs in batch mode.
+* **run.bash** : A bash script to run multiple runs in batch mode.
 
-src/fitDky.gp : A gnuplot script to fit the decay curve.
+* **src/fitDky.gp** : A gnuplot script to fit the decay curve.
 
-src/PlotHistogram.C : An attempt to plot specific histograms from the output.
+* **src/PlotHistogram.C** : An attempt to plot specific histograms from the 
+    output.
 
-src/ProjectNSub.C : Performs projections of the Time vs. Energy spectra and 
-                    does the background subtraction before plotting.
+* **src/ProjectNSub.C** : Performs projections of the Time vs. Energy spectra 
+    and does the background subtraction before plotting.
 
-src/SaveEps.C : Saves the various histograms to eps and jpg (only 2d) files. 
+* **src/SaveEps.C** : Saves the various histograms to eps and jpg (only 2d) 
+    files. 
 
-src/Simp.C : A macro version of the compiled code. The user should point the
-             script to the proper location of the ddasdumper code and ensure 
-             the ddasdumper has been compiled with the same version of ROOT.
+* **src/Simp.C** : A macro version of the compiled code. The user should point 
+    the script to the proper location of the ddasdumper code and ensure 
+    the ddasdumper has been compiled with the same version of ROOT.
 
-********** Questions? Comments? **********
+Questions? Comments?
+=======================================
 Contact : stanpaulauskas@gmail.com

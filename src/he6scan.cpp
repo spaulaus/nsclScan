@@ -83,6 +83,8 @@ int main(int argc, char* argv[]) {
         tHstgrm.insert(make_pair(i, tHist));
     }
 
+    //TH1D *
+
     TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff",
                            1.3e4, 0., 13.);
     TH1D *tHist1 = new TH1D("csI:large:0:cpms", "CPmS",
@@ -134,6 +136,12 @@ int main(int argc, char* argv[]) {
                 if(id == 5)
                     offTime = time;
                 if(id == 4) {
+                	if((time - onTime)*10.e-9 > 13.) {
+                		cerr << "Oh man, we missed a beam on!! I am going to"
+                			 << " junk all the stored stats till now. " << endl;
+                		csiE.clear();
+	                    csiT.clear();
+                	}
                     onTime = time;
                     for(unsigned int i = 0; i < csiE.size(); i++)
                         etHstgrm->Fill(csiE.at(i), csiT.at(i));
@@ -152,7 +160,6 @@ int main(int argc, char* argv[]) {
                     oHist->Fill(timeBon);
                     csiE.push_back(en);
                     csiT.push_back(timeBon);
-                    //etHstgrm->Fill(en,timeBon);
                 }
                 if(id == 16 && onTime != 0) {
                     double calEn = CalGe(en*energyContraction);
