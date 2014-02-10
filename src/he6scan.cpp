@@ -83,7 +83,10 @@ int main(int argc, char* argv[]) {
         tHstgrm.insert(make_pair(i, tHist));
     }
 
-    //TH1D *
+    TH1D *hits = new TH1D("hitSpectrum", "Channel Hit Spectrum", numCh+1, 0.,
+                              numCh+1);
+    TH1D *mult = new TH1D("multiplicity", "Event Multiplicity", numCh+1, 0.,
+                              numCh+1);
 
     TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff",
                            1.3e4, 0., 13.);
@@ -130,18 +133,21 @@ int main(int argc, char* argv[]) {
                 double en = j->GetEnergy() / energyContraction;
                 double time = j->GetTime();
 
+                mult->Fill(evt.size());
+                hits->Fill(id);
+
                 //set the various times
                 if(i == 0 && j == evt.at(0) && it == *files.begin())
                     firstTime = time;
                 if(id == 5)
                     offTime = time;
                 if(id == 4) {
-                	if((time - onTime)*10.e-9 > 13.) {
-                		cerr << "Oh man, we missed a beam on!! I am going to"
-                			 << " junk all the stored stats till now. " << endl;
-                		csiE.clear();
-	                    csiT.clear();
-                	}
+                    if((time - onTime)*10.e-9 > 13.) {
+                        cerr << "Oh man, we missed a beam on!! I am going to"
+                             << " junk all the stored stats till now. " << endl;
+                        csiE.clear();
+                        csiT.clear();
+                    }
                     onTime = time;
                     for(unsigned int i = 0; i < csiE.size(); i++)
                         etHstgrm->Fill(csiE.at(i), csiT.at(i));
@@ -181,6 +187,8 @@ int main(int argc, char* argv[]) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
+    hits->Write();
+    mult->Write();
     bHist->Write();
     geCal->Write();
     oHist->Write();
