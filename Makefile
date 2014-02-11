@@ -60,4 +60,4 @@ $(OBJDIR)/%.o: %.cpp
 .PHONY: clean
 clean: 
 	@echo "Cleaning..."
-	@rm -f $(OBJDIR)/* $(PROGRAM) *~ src/*~ include/*~
+	@rm -f $(OBJDIR)/*.o $(PROGRAM) *~ src/*~ include/*~
