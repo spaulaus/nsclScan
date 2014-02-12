@@ -1,13 +1,16 @@
 #!/bin/bash
 
-for i in 133 143 144 146 147 148 153
+make clean && make
+
+for i in 145
 do
-    outFile="data/run$i/run-0$i-summed.root"
+    #outFile="data/run$i/run-0$i-summed.root"
+    outFile="data/test/test00.root"
 
     if [ -e "$otFl" ]
     then
         echo "Removing " $otFl
         rm $otFl
     fi
-    ./ex fls/run$i/*.root $outFile
+    ./he6scan fls/run$i/*.root $outFile
 done

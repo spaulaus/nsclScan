@@ -36,16 +36,16 @@ double CalGe(const double &en) {
 }
 
 int main(int argc, char* argv[]) {
-	if(argc < 3) {
-		cerr << "Usage : ./ex <input> <output>" << endl;
-		exit(2);
-	}
-
-	set<string> files;
-	for(int i = 1; i < argc-1; i++)
-		files.insert(argv[i]);
-	string outFile = argv[argc-1];
-
+    if(argc < 3) {
+        cerr << "Usage : ./ex <input> <output>" << endl;
+        exit(2);
+    }
+    
+    set<string> files;
+    for(int i = 1; i < argc-1; i++)
+        files.insert(argv[i]);
+    string outFile = argv[argc-1];
+    
     int numMods = 2;
     int numCh = numMods*16;
     double energyContraction = 4.;
@@ -87,6 +87,8 @@ int main(int argc, char* argv[]) {
                               numCh+1);
     TH1D *mult = new TH1D("multiplicity", "Event Multiplicity", numCh+1, 0.,
                               numCh+1);
+
+    TH1D *tdiff = new TH1D("tdiff", "Beam On/Off time diff", 5e3, 0.0, 5.);
 
     TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff",
                            1.3e4, 0., 13.);
@@ -143,8 +145,6 @@ int main(int argc, char* argv[]) {
                 //set the various times
                 if(i == 0 && j == evt.at(0) && it == *files.begin())
                     firstTime = time;
-                if(id == 5)
-                    offTime = time;
                 if(id == 4) {
                     if((time - onTime)*10.e-9 > 13.) {
                         cerr << "Oh man, we missed a beam on!! I am going to"
@@ -157,6 +157,10 @@ int main(int argc, char* argv[]) {
                         etHstgrm->Fill(csiE.at(i), csiT.at(i));
                     csiE.clear();
                     csiT.clear();
+                }
+                if(id == 5) {
+                    tdiff->Fill((time-onTime)*10.e-9);
+                    offTime = time;
                 }
 
                 //caluclate the Run Time in seconds.
@@ -196,6 +200,7 @@ int main(int argc, char* argv[]) {
     bHist->Write();
     geCal->Write();
     oHist->Write();
+    tdiff->Write();
     tHist1->Write();
     etHstgrm->Write();
     gtHstgrm->Write();
