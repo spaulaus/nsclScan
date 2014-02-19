@@ -4,9 +4,10 @@
  *  \author S. V. Paulauskas
  *  \date 15 January 2014
  */
-
+#include <chrono>
 #include <iostream>
 #include <map>
+#include <random>
 #include <set>
 #include <sstream>
 #include <string>
@@ -40,6 +41,12 @@ int main(int argc, char* argv[]) {
         files.insert(argv[i]);
     string outFile = argv[argc-1];
     
+    //Initialize the rng for the energies. Pixie energies are ints 
+    //performing calibrations on them can lead to artifacts w/o this.
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    mt19937_64 rng(seed);
+    uniform_real_distribution<double> dist(0.0,1.0);
+    
     int numMods = 2;
     int numCh = numMods*16;
     double energyContraction = 4.;
@@ -56,76 +63,81 @@ int main(int argc, char* argv[]) {
 
     set<int> usdIds = detLib.GetUsedIds();
 
-    std::map<int, TH1D*> eHstgrm, tHstgrm;
+    //---------- BEGIN HISTOGRAM DEFINITIONS ----------
+    std::map<int, TH1D*> ceHstgrm, eHstgrm, tHstgrm;
     for(const auto &i : usdIds) {
         Identifier chInfo = detLib.at(i);
 
-        stringstream eName, eTitle, etName, etTitle, tTitle, tName;
+        stringstream ceName, ceTitle, eName, eTitle, tTitle, tName;
+
+        ceName << chInfo.GetType() << ":" << chInfo.GetSubtype()
+               << ":" << i << ":" << "CalEnergy";
+        ceTitle << "Calibrated Energy Spectrum for M" 
+                << detLib.ModuleFromIndex(i) << "C" 
+                << detLib.ChannelFromIndex(i);
+
         eName << chInfo.GetType() << ":" << chInfo.GetSubtype()
-             << ":" << i << ":" << "RawEnergy";
+              << ":" << i << ":" << "RawEnergy";
         eTitle << "Energy Spectrum for M" << detLib.ModuleFromIndex(i)
-              << "C" << detLib.ChannelFromIndex(i);
-
+               << "C" << detLib.ChannelFromIndex(i);
+        
         tName << chInfo.GetType() << ":" << chInfo.GetSubtype()
-             << ":" << i << ":" << "Rate";
+              << ":" << i << ":" << "Rate";
         tTitle << "Rate Spectrum for M" << detLib.ModuleFromIndex(i)
-              << "C" << detLib.ChannelFromIndex(i);
+               << "C" << detLib.ChannelFromIndex(i);
+        
+        
+        TH1D *ceHist = new TH1D(ceName.str().c_str(), ceTitle.str().c_str(),
+                                5e5, 0., 5e3);
+        TH1D *eHist  = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
+                                16384, 0., 16384.);
+        TH1D *tHist  = new TH1D(tName.str().c_str(), tTitle.str().c_str(),
+                                5000, 0., 5000.);
 
-        TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
-                               16384, 0., 16384.);
-        TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(),
-                               5000, 0., 5000.);
-
+        ceHstgrm.insert(make_pair(i,ceHist));
         eHstgrm.insert(make_pair(i, eHist));
         tHstgrm.insert(make_pair(i, tHist));
     }
 
     TH1D *hits = new TH1D("hitSpectrum", "Channel Hit Spectrum", numCh+1, 0.,
-                              numCh+1);
+                          numCh+1);
     TH1D *mult = new TH1D("multiplicity", "Event Multiplicity", numCh+1, 0.,
-                              numCh+1);
-
+                          numCh+1);
     TH1D *tdiff = new TH1D("tdiff", "Beam On/Off time diff", 5e3, 0.0, 5.);
-    
     TH1D *cHist = new TH1D("ctdiff", "CsI Time Diff", 1e6, 0.0, 1e-4);
-    
     TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff",
-                           1.3e4, 0., 13.);
+                           1.3e4, 0., 1.3e1);
     TH1D *tHist1 = new TH1D("csI:large:0:cpms", "CPmS",
                             5.e6, 0., 5.e3);
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn",
                            1.3e4, 0., 13.);
-    TH1D *geCal = new TH1D("ge:ignore:16:CalEn", "Calibrated Ge",
-                           8192, 0., 8192.);
-    TH1D *csiCal = new TH1D("csIcal", "Calibrated CsI",
-                            16384, 0., 8192.);
-    
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy",
                               "Time vs Energy Spectrum for M0C0",
-                              8192, 0., 8192, 1.3e4, 0., 1.3e1);
+                              1e4, 0., 5.e3, 1.3e4, 0., 1.3e1);
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy",
                               "Time vs Cal Energy Spectrum for M1C0",
-                              8192, 0., 8192., 1.3e4, 0., 13.);
-
+                              1e4, 0., 5.e3, 1.3e4, 0., 13.);
+    //---------- END HISTOGRAM DEFINITIONS ---------
+    
     //initialize the first time
     double firstTime = 0, onTime = 0, offTime = 0, csiTime = 0;
     int numCycles = 4, cycleCount = 0;
     
     vector<double> csiE, csiT;
-
+    
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
              << it << endl;
-
+        
         //Load in the ROOT tree from the ddasdumper
         TFile inFile(it.c_str());
         TTree *tr = (TTree*)inFile.Get("dchan");
         TBranch *br = tr->GetBranch("ddasevent");
-
+        
         DDASEvent *event = new DDASEvent();
         br->SetAddress(&event);
         int numEvent = tr->GetEntries();
-
+        
         for (int i = 0; i < numEvent; i++) {
             // if(i == 1000)
             //     break;
@@ -135,16 +147,21 @@ int main(int argc, char* argv[]) {
                 double slot  = j->GetSlotID();
                 double chan = j->GetChannelID();
                 double id = CalcId(slot, chan);
-                double en = j->GetEnergy() / energyContraction;
+                double en = j->GetEnergy() / energyContraction + dist(rng);
                 double time = j->GetTime();
-
+                
                 mult->Fill(evt.size());
                 hits->Fill(id);
-
+                
                 //Continue through event if the id is not in the used list
                 if(usdIds.find(id) == usdIds.end())
                     continue;
-
+                
+                //caluclate the Run Time in seconds.
+                double runTime = (time - firstTime)*10.e-9;
+                double timeBoff = (time - offTime)*10.e-9;
+                double timeBon = (time - onTime)*10.e-9;
+                
                 //set the various times
                 if(i == 0 && j == evt.at(0) && it == *files.begin())
                     firstTime = time;
@@ -160,37 +177,35 @@ int main(int argc, char* argv[]) {
                         etHstgrm->Fill(csiE.at(i), csiT.at(i));
                     csiE.clear();
                     csiT.clear();
-
+                    
                     cycleCount++;
                 }
                 if(id == 5) {
                     tdiff->Fill((time-onTime)*10.e-9);
                     offTime = time;
                 }
-
-                //caluclate the Run Time in seconds.
-                double runTime = (time - firstTime)*10.e-9;
-                double timeBoff = (time - offTime)*10.e-9;
-                double timeBon = (time - onTime)*10.e-9;
-
-                //Stuff related to only the CsI
+                
                 if(cycleCount > numCycles) {
-                    if(id == 0 && onTime != 0) {
-                        cHist->Fill((time - csiTime)*10.e-9);
-                        csiTime = time;
-                        
-                        csiCal->Fill(cal.GetCsICal(en));
-                        bHist->Fill(timeBoff);
-                        oHist->Fill(timeBon);
-                        csiE.push_back(cal.GetCsICal(en));
-                        csiT.push_back(timeBon);
+                    if(id == 0) {
+                        ceHstgrm.at(id)->Fill(cal.GetCsICal(en));
+                        if(onTime != 0) {
+                            cHist->Fill((time - csiTime)*10.e-9);
+                            csiTime = time;
+                            
+                            bHist->Fill(timeBoff);
+                            oHist->Fill(timeBon);
+                            csiE.push_back(cal.GetCsICal(en));
+                            csiT.push_back(timeBon);
+                        }
                     }
+                    
                     if(id == 16 && onTime != 0) {
                         double calEn = cal.GetGeCal(en*energyContraction);
                         gtHstgrm->Fill(calEn,timeBon);
-                        geCal->Fill(calEn);
+                        ceHstgrm.at(id)->Fill(calEn);
                     }
-                }
+                }//if(cycleCount 
+                
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(runTime);
                 tHist1->Fill(runTime);
@@ -202,20 +217,19 @@ int main(int argc, char* argv[]) {
     //Save the histograms to a root file
     TFile outF(outFile.c_str(), "RECREATE");
     for(const auto &id : usdIds) {
+        ceHstgrm.at(id)->Write();
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
-    csiCal->Write();
     cHist->Write();
     hits->Write();
     mult->Write();
     bHist->Write();
-    geCal->Write();
     oHist->Write();
     tdiff->Write();
     tHist1->Write();
     etHstgrm->Write();
     gtHstgrm->Write();
     outF.Write();
-    cout << "Finishing up" << endl;
+    cout << "Finishing up..." << endl;
 }

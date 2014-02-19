@@ -6,8 +6,8 @@
 #include "Calibrator.hpp"
 
 double Calibrator::GetCsICal(const double &raw) {
-    double m = 2.23693;
-    double b = -8.43941;
+    double m = 2.23724;
+    double b = -9.4343;
     return(m*raw+b);
 }
 
