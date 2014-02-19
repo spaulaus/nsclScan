@@ -1,5 +1,5 @@
 {
-	gROOT->Reset();
+    gROOT->Reset();
     gROOT->SetStyle("Modern");
     gROOT->ForceStyle(kTRUE);
     //removes that statistics box

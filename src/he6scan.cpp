@@ -17,6 +17,7 @@
 #include <TH1D.h>
 #include <TH2D.h>
 
+#include "Calibrator.hpp"
 #include "DDASEvent.h"
 #include "DetectorLibrary.hpp"
 #include "Identifier.hpp"
@@ -26,13 +27,6 @@ using namespace std;
 
 double CalcId(const double &slot, const double &ch) {
     return((slot-2)*16 + ch);
-}
-
-double CalGe(const double &en) {
-    double m = 0.17065;
-    double b = 1.4821;
-    double calEn = m*en+b;
-    return(calEn);
 }
 
 int main(int argc, char* argv[]) {
@@ -49,6 +43,9 @@ int main(int argc, char* argv[]) {
     int numMods = 2;
     int numCh = numMods*16;
     double energyContraction = 4.;
+
+    //Instance the Calibrator
+    Calibrator cal;
 
     //Initialize the Detector Library
     DetectorLibrary detLib(numCh);
@@ -75,7 +72,7 @@ int main(int argc, char* argv[]) {
               << "C" << detLib.ChannelFromIndex(i);
 
         TH1D *eHist = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
-                               8192, 0., 8192.);
+                               16384, 0., 16384.);
         TH1D *tHist = new TH1D(tName.str().c_str(), tTitle.str().c_str(),
                                5000, 0., 5000.);
 
@@ -89,7 +86,9 @@ int main(int argc, char* argv[]) {
                               numCh+1);
 
     TH1D *tdiff = new TH1D("tdiff", "Beam On/Off time diff", 5e3, 0.0, 5.);
-
+    
+    TH1D *cHist = new TH1D("ctdiff", "CsI Time Diff", 1e6, 0.0, 1e-4);
+    
     TH1D *bHist = new TH1D("csI:large:0:dtOff", "Tdiff w BeamOff",
                            1.3e4, 0., 13.);
     TH1D *tHist1 = new TH1D("csI:large:0:cpms", "CPmS",
@@ -97,17 +96,21 @@ int main(int argc, char* argv[]) {
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn",
                            1.3e4, 0., 13.);
     TH1D *geCal = new TH1D("ge:ignore:16:CalEn", "Calibrated Ge",
-                           8192,0.,8192.);
-
+                           8192, 0., 8192.);
+    TH1D *csiCal = new TH1D("csIcal", "Calibrated CsI",
+                            16384, 0., 8192.);
+    
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy",
                               "Time vs Energy Spectrum for M0C0",
-                              8192, 0., 8192., 1.3e4, 0., 13.);
+                              8192, 0., 8192, 1.3e4, 0., 1.3e1);
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy",
                               "Time vs Cal Energy Spectrum for M1C0",
                               8192, 0., 8192., 1.3e4, 0., 13.);
 
     //initialize the first time
-    double firstTime = 0, onTime = 0, offTime = 0;
+    double firstTime = 0, onTime = 0, offTime = 0, csiTime = 0;
+    int numCycles = 4, cycleCount = 0;
+    
     vector<double> csiE, csiT;
 
     for(const auto &it : files) {
@@ -157,6 +160,8 @@ int main(int argc, char* argv[]) {
                         etHstgrm->Fill(csiE.at(i), csiT.at(i));
                     csiE.clear();
                     csiT.clear();
+
+                    cycleCount++;
                 }
                 if(id == 5) {
                     tdiff->Fill((time-onTime)*10.e-9);
@@ -169,21 +174,26 @@ int main(int argc, char* argv[]) {
                 double timeBon = (time - onTime)*10.e-9;
 
                 //Stuff related to only the CsI
-                if(id == 0 && onTime != 0) {
-                    bHist->Fill(timeBoff);
-                    oHist->Fill(timeBon);
-                    csiE.push_back(en);
-                    csiT.push_back(timeBon);
-                }
-                if(id == 16 && onTime != 0) {
-                    double calEn = CalGe(en*energyContraction);
-                    gtHstgrm->Fill(calEn,timeBon);
-                    geCal->Fill(calEn);
+                if(cycleCount > numCycles) {
+                    if(id == 0 && onTime != 0) {
+                        cHist->Fill((time - csiTime)*10.e-9);
+                        csiTime = time;
+                        
+                        csiCal->Fill(cal.GetCsICal(en));
+                        bHist->Fill(timeBoff);
+                        oHist->Fill(timeBon);
+                        csiE.push_back(cal.GetCsICal(en));
+                        csiT.push_back(timeBon);
+                    }
+                    if(id == 16 && onTime != 0) {
+                        double calEn = cal.GetGeCal(en*energyContraction);
+                        gtHstgrm->Fill(calEn,timeBon);
+                        geCal->Fill(calEn);
+                    }
                 }
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(runTime);
-                if(onTime != 0 && runTime < 1463 && runTime > 1450)
-                    tHist1->Fill(runTime);
+                tHist1->Fill(runTime);
             }//for(const auto j : evt)
         }//for(int i = 0; i < numEvent
         inFile.Close();
@@ -195,6 +205,8 @@ int main(int argc, char* argv[]) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
+    csiCal->Write();
+    cHist->Write();
     hits->Write();
     mult->Write();
     bHist->Write();

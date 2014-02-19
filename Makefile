@@ -23,13 +23,14 @@ c++SrcSuf = cpp
 PROGRAM = he6scan
 
 #Define Objects
+CALIBRATORO	 = Calibrator.o
 DETECTORLIBRARYO = DetectorLibrary.o
 IDENTIFIERO      = Identifier.o
 MAINO            = he6scan.o
 MAPFILEO         = MapFile.o
 
 #Make the object list and prefix the object directory
-OBJS = $(DETECTORLIBRARYO) $(IDENTIFIERO) $(MAINO) $(MAPFILEO)
+OBJS = $(CALIBRATORO) $(DETECTORLIBRARYO) $(IDENTIFIERO) $(MAINO) $(MAPFILEO)
 
 OBJDIR = obj
 OBJS_W_DIR = $(addprefix $(OBJDIR)/,$(OBJS))
