@@ -86,7 +86,6 @@ int main(int argc, char* argv[]) {
         tTitle << "Rate Spectrum for M" << detLib.ModuleFromIndex(i)
                << "C" << detLib.ChannelFromIndex(i);
         
-        
         TH1D *ceHist = new TH1D(ceName.str().c_str(), ceTitle.str().c_str(),
                                 5e5, 0., 5e3);
         TH1D *eHist  = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
@@ -118,13 +117,13 @@ int main(int argc, char* argv[]) {
                               "Time vs Cal Energy Spectrum for M1C0",
                               1e4, 0., 5.e3, 1.3e4, 0., 13.);
     //---------- END HISTOGRAM DEFINITIONS ---------
-    
+
     //initialize the first time
     double firstTime = 0, onTime = 0, offTime = 0, csiTime = 0;
     int numCycles = 4, cycleCount = 0;
-    
+
     vector<double> csiE, csiT;
-    
+
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
              << it << endl;
@@ -143,6 +142,8 @@ int main(int argc, char* argv[]) {
             //     break;
             br->GetEntry(i);
             vector<ddaschannel*> evt = event->GetData();
+            mult->Fill(evt.size());
+
             for(const auto &j : evt) {
                 double slot  = j->GetSlotID();
                 double chan = j->GetChannelID();
@@ -150,7 +151,6 @@ int main(int argc, char* argv[]) {
                 double en = j->GetEnergy() / energyContraction + dist(rng);
                 double time = j->GetTime();
                 
-                mult->Fill(evt.size());
                 hits->Fill(id);
                 
                 //Continue through event if the id is not in the used list
