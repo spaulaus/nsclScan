@@ -3,17 +3,17 @@
     TH2D *primHist = (TH2D*)f.Get("csI:large:0:TimeEnergy");
 
     //---------- The waiting period ---------
-    TH1D *tw = (TH1D*)primHist->ProjectionX("tw",2500,4499);
+    TH1D *tw = (TH1D*)primHist->ProjectionX("tw",2500,4999);
 
     //---------- The various projections ---------
-    TH1D *s1 = (TH1D*)primHist->ProjectionX("s1",4500,5499);
-    TH1D *s2 = (TH1D*)primHist->ProjectionX("s2",5500,8499);
-    TH1D *b2 = (TH1D*)primHist->ProjectionX("b2",8500,11499);
+    TH1D *s1 = (TH1D*)primHist->ProjectionX("s1",5000,5999);
+    TH1D *s2 = (TH1D*)primHist->ProjectionX("s2",6000,8749);
+    TH1D *b2 = (TH1D*)primHist->ProjectionX("b2",8750,11499);
     TH1D *b1 = (TH1D*)primHist->ProjectionX("b1",11500,12499);
 
     TH1D *sub1 = new TH1D ("sub1", "", 1e4, 0., 5.e3);
     sub1->Add(s1,b1,1,-1);
-    TH1D *sub2 = new TH1D ("sub2", "", 1e4, 0., 5.e3.);
+    TH1D *sub2 = new TH1D ("sub2", "", 1e4, 0., 5.e3);
     sub2->Add(s2,b2,1,-1);
     
     sub1->SetXTitle("Energy (keV)");
@@ -24,21 +24,21 @@
     sub2->SetLineColor(2018);
     sub2->Draw("same");
 
-    TH1D *tot = new TH1D("tot","tot", 1e4, 0., 5.e3.);
+    TH1D *tot = new TH1D("tot","tot", 1e4, 0., 5.e3);
     tot->Add(sub1,sub2,1,1);
         
     //---------- An even 2 section cut starting after the wait ---------
     TH1D *s3 = (TH1D*)primHist->ProjectionX("s3",4500,8499);
     TH1D *b3 = (TH1D*)primHist->ProjectionX("b3",8500,12499);
 
-    TH1D *sub3 = new TH1D("sub3","sub3", 1e4, 0., 5.e3.);
+    TH1D *sub3 = new TH1D("sub3","sub3", 1e4, 0., 5.e3);
     sub3->Add(s3,b3,1,-1);
 
     //---------- An even 2 section cut ignoring the wait ----------
     TH1D *s4 = (TH1D*)primHist->ProjectionX("s4",2500,7499);
     TH1D *b4 = (TH1D*)primHist->ProjectionX("b4",7500,12499);
 
-    TH1D *sub4 = new TH1D("sub4","sub4", 1e4, 0., 5.e3.);
+    TH1D *sub4 = new TH1D("sub4","sub4", 1e4, 0., 5.e3);
     sub3->Add(s4,b4,1,-1);
 
     //---------- Project every 500 ms ----------

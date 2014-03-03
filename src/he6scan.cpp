@@ -87,9 +87,9 @@ int main(int argc, char* argv[]) {
                << "C" << detLib.ChannelFromIndex(i);
         
         TH1D *ceHist = new TH1D(ceName.str().c_str(), ceTitle.str().c_str(),
-                                5e5, 0., 5e3);
+                                10000, 0., 5000.);
         TH1D *eHist  = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
-                                16384, 0., 16384.);
+                                32768, 0., 16384.);
         TH1D *tHist  = new TH1D(tName.str().c_str(), tTitle.str().c_str(),
                                 5000, 0., 5000.);
 
@@ -185,9 +185,9 @@ int main(int argc, char* argv[]) {
                     offTime = time;
                 }
                 
-                if(cycleCount > numCycles) {
-                    if(id == 0) {
-                        ceHstgrm.at(id)->Fill(cal.GetCsICal(en));
+                if(id == 0) {
+                    ceHstgrm.at(id)->Fill(cal.GetCsICal(en));
+                    if(cycleCount > numCycles) {
                         if(onTime != 0) {
                             cHist->Fill((time - csiTime)*10.e-9);
                             csiTime = time;
@@ -199,10 +199,11 @@ int main(int argc, char* argv[]) {
                         }
                     }
                     
-                    if(id == 16 && onTime != 0) {
+                    if(id == 16) {
                         double calEn = cal.GetGeCal(en*energyContraction);
-                        gtHstgrm->Fill(calEn,timeBon);
                         ceHstgrm.at(id)->Fill(calEn);
+                        if(onTime != 0)
+                            gtHstgrm->Fill(calEn,timeBon);
                     }
                 }//if(cycleCount 
                 
