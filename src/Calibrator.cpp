@@ -6,8 +6,8 @@
 #include "Calibrator.hpp"
 
 double Calibrator::GetCsICal(const double &raw) {
-    //Gain +850 V
-    double m = 2.23724;
+    //Gain +850 V; energy contraction 1
+    double m = 0.559311;
     double b = -9.4343;
     return(m*raw+b);
     //Gain +900 V - calibrated from bkg lines
@@ -23,7 +23,8 @@ double Calibrator::GetCsICal(const double &raw) {
 
 
 double Calibrator::GetGeCal(const double &raw) {
-    double m = 0.17065;
+    //Energy contraction of 1
+    double m = 0.0426626;
     double b = 1.4821;
     return(m*raw+b);
 }

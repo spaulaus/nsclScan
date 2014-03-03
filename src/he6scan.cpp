@@ -17,6 +17,7 @@
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TH3D.h>
 
 #include "Calibrator.hpp"
 #include "DDASEvent.h"
@@ -49,7 +50,6 @@ int main(int argc, char* argv[]) {
     
     int numMods = 2;
     int numCh = numMods*16;
-    double energyContraction = 4.;
 
     //Instance the Calibrator
     Calibrator cal;
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
         TH1D *ceHist = new TH1D(ceName.str().c_str(), ceTitle.str().c_str(),
                                 10000, 0., 5000.);
         TH1D *eHist  = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
-                                32768, 0., 16384.);
+                                65536, 0., 32768);
         TH1D *tHist  = new TH1D(tName.str().c_str(), tTitle.str().c_str(),
                                 5000, 0., 5000.);
 
@@ -110,6 +110,14 @@ int main(int argc, char* argv[]) {
                             5.e6, 0., 5.e3);
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn",
                            1.3e4, 0., 13.);
+
+    TH2D *corrB = new TH2D("corr-b", "",
+                           1e4, 0., 5.e3, 1e4, 0., 1e-3);
+    TH2D *corrNb = new TH2D("corr-nb", "",
+                            1e4, 0., 5.e3, 1e4, 0., 1e-3);
+    TH2D *corre = new TH2D("corre", "",
+                            1e4, 0., 5.e3, 1e4, 0., 5.e3);
+    
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy",
                               "Time vs Energy Spectrum for M0C0",
                               1e4, 0., 5.e3, 1.3e4, 0., 1.3e1);
@@ -118,8 +126,13 @@ int main(int argc, char* argv[]) {
                               1e4, 0., 5.e3, 1.3e4, 0., 13.);
     //---------- END HISTOGRAM DEFINITIONS ---------
 
-    //initialize the first time
-    double firstTime = 0, onTime = 0, offTime = 0, csiTime = 0;
+    //initialize some of the times
+    double firstTime = 0, onTime = 0, offTime = 0, csiTime = 0, 
+        betaTime = 0, nonBetaTime = 0, betaEn = 0, nonBetaEn = 0;
+
+    bool hasBetaTime = false, hasNonBetaTime = false;
+
+    //How many cycles should we ignore for the missing data chunks?
     int numCycles = 4, cycleCount = 0;
 
     vector<double> csiE, csiT;
@@ -138,8 +151,8 @@ int main(int argc, char* argv[]) {
         int numEvent = tr->GetEntries();
         
         for (int i = 0; i < numEvent; i++) {
-            // if(i == 1000)
-            //     break;
+            //if(i == 1000)
+            //    break;
             br->GetEntry(i);
             vector<ddaschannel*> evt = event->GetData();
             mult->Fill(evt.size());
@@ -148,7 +161,7 @@ int main(int argc, char* argv[]) {
                 double slot  = j->GetSlotID();
                 double chan = j->GetChannelID();
                 double id = CalcId(slot, chan);
-                double en = j->GetEnergy() / energyContraction + dist(rng);
+                double en = j->GetEnergy() + dist(rng);
                 double time = j->GetTime();
                 
                 hits->Fill(id);
@@ -166,7 +179,7 @@ int main(int argc, char* argv[]) {
                 if(i == 0 && j == evt.at(0) && it == *files.begin())
                     firstTime = time;
                 if(id == 4) {
-                    if((time - onTime)*10.e-9 > 13.) {
+                    if((time - onTime)*10.e-9 > 20.) {
                         cerr << "Oh man, we missed a beam on!! I am going to"
                              << " junk all the stored stats till now. " << endl;
                         csiE.clear();
@@ -185,8 +198,31 @@ int main(int argc, char* argv[]) {
                     offTime = time;
                 }
                 
-                if(id == 0) {
-                    ceHstgrm.at(id)->Fill(cal.GetCsICal(en));
+                if(id == 2) {
+                    //double calEn = cal.GetCsICal(en);
+                    double calEn = en;
+                    ceHstgrm.at(id)->Fill(calEn);
+                    if(calEn < 3500 && calEn > 500 && !hasBetaTime) {
+                        betaEn = calEn;
+                        betaTime = time;
+                        hasBetaTime = true;
+                    }
+                    if(calEn < 120 && calEn > 20 && hasBetaTime) {
+                        nonBetaEn = calEn;
+                        nonBetaTime = time;
+                        hasNonBetaTime = true;
+                    }
+
+                    if(hasBetaTime && hasNonBetaTime) {
+                        double corrTime = (nonBetaTime - betaTime)*10.e-9;
+                        corrB->Fill(betaEn, corrTime);
+                        corrNb->Fill(nonBetaEn, corrTime);
+                        corre->Fill(betaEn, nonBetaEn);
+                        hasBetaTime = hasNonBetaTime = false;
+                        betaTime = nonBetaTime = 0;
+                        betaEn = nonBetaEn = 0;
+                    }
+
                     if(cycleCount > numCycles) {
                         if(onTime != 0) {
                             cHist->Fill((time - csiTime)*10.e-9);
@@ -194,18 +230,18 @@ int main(int argc, char* argv[]) {
                             
                             bHist->Fill(timeBoff);
                             oHist->Fill(timeBon);
-                            csiE.push_back(cal.GetCsICal(en));
+                            csiE.push_back(calEn);
                             csiT.push_back(timeBon);
                         }
                     }
-                    
-                    if(id == 16) {
-                        double calEn = cal.GetGeCal(en*energyContraction);
-                        ceHstgrm.at(id)->Fill(calEn);
-                        if(onTime != 0)
-                            gtHstgrm->Fill(calEn,timeBon);
-                    }
-                }//if(cycleCount 
+                }//if(id == 0
+
+                if(id == 16) {
+                    double calEn = cal.GetGeCal(en);
+                    ceHstgrm.at(id)->Fill(calEn);
+                    if(onTime != 0 && cycleCount > numCycles)
+                        gtHstgrm->Fill(calEn,timeBon);
+                }
                 
                 eHstgrm.at(id)->Fill(en);
                 tHstgrm.at(id)->Fill(runTime);
@@ -222,6 +258,9 @@ int main(int argc, char* argv[]) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
+    corre->Write();
+    corrB->Write();
+    corrNb->Write();
     cHist->Write();
     hits->Write();
     mult->Write();

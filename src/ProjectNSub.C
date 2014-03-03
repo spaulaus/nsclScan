@@ -28,8 +28,8 @@
     tot->Add(sub1,sub2,1,1);
         
     //---------- An even 2 section cut starting after the wait ---------
-    TH1D *s3 = (TH1D*)primHist->ProjectionX("s3",4500,8499);
-    TH1D *b3 = (TH1D*)primHist->ProjectionX("b3",8500,12499);
+    TH1D *s3 = (TH1D*)primHist->ProjectionX("s3",1e4,5e3);
+    TH1D *b3 = (TH1D*)primHist->ProjectionX("b3",1e4,5e3);
 
     TH1D *sub3 = new TH1D("sub3","sub3", 1e4, 0., 5.e3);
     sub3->Add(s3,b3,1,-1);
