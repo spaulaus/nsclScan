@@ -1,6 +1,7 @@
-//*******************************************************************************************//
+//*******************************************************//
 // Root macro for a Monte-Carlo fit of beta spectrum
-
+// Author : O. Naviliat-Cunicic
+//*******************************************************//
 // Math constants
 const double pi=TMath::Pi();
 
@@ -95,16 +96,16 @@ int syst_C1(void) {
             // Generate kinematic variables following the beta spectrum
             while(ftir>fres) {
                 // (this neglects the energy of the recoiling nucleus)
-                ftir=gRandom->Rndm()*FMAX;
-                Te=gRandom->Rndm()*Qb;
+                ftir = gRandom->Rndm()*FMAX;
+                Te = gRandom->Rndm()*Qb;
                 
-                pe=sqrt(Te*Te+2.*me*Te);
-                E=Te+me;
-                fres=pe*E*pow(Qb-Te,2.)*(1. + C1[ib]*E);
+                pe = sqrt(Te*Te+2.*me*Te);
+                E = Te + me;
+                fres = pe * E * pow(Qb-Te,2.) * (1. + C1[ib]*E);
             } // got a new valid event
             
             // Tell the world where we are
-            if( (nevts)%MODULO_print==0) 
+            if( nevts % MODULO_print == 0 ) 
                 cout << setw(8) << nevts << " generated events in loop " 
                      << ib+1 << endl;
             
@@ -144,10 +145,10 @@ int syst_C1(void) {
     } //for(int ib = 0;  End of loop over spectra
     
     cout << "Start fits..." << endl;
-    //*******************************************************************************************//
-    // At this stage the spectra have been generated, now do fits                                //
-    //*******************************************************************************************//
     
+    //***********************************************************//
+    // At this stage the spectra have been generated, now do fits//
+    //***********************************************************//
     Double_t Fit_E(Double_t *, Double_t *);
     TF1 *mf=new TF1("Fit_E_f",Fit_E,cMIN,cMAX,2);
     
@@ -207,10 +208,15 @@ int syst_C1(void) {
     TString filename="systEff.dat";
     ofstream outfile(filename.Data());
     
-    cout<<setw(10)<<"Sys.effect"<<setw(10)<<"C1_fit"<<setw(10)<<"err_C1_fit";
-    cout<<setw(10)<<"chi2"<<setw(10)<<"ndf"<<setw(10)<<"chi2/ndf"<<endl;
-    outfile<<setw(10)<<"Sys.effect"<<setw(10)<<"C1_fit"<<setw(10)<<"err_C1_fit";
-    outfile<<setw(10)<<"chi2"<<setw(10)<<"ndf"<<setw(10)<<"chi2/ndf"<<endl;
+    cout.flags(ios::left);
+    cout << setw(11) << "Sys.effect" << setw(11) 
+         << "C1_fit" << setw(11) 
+         << "err_C1_fit" << setw(11) << "chi2" << setw(11) << "ndf" 
+         << setw(11) << "chi2/ndf" << endl;
+    outfile.flags(ios::left);
+    outfile << setw(11) << "Sys.effect" << setw(11) << "C1_fit" << setw(11) 
+            << "err_C1_fit" << setw(11) << "chi2" << setw(11) << "ndf" 
+            << setw(11) << "chi2/ndf" << endl;
     
     for(int is = 0; is < NSYST; is++) {		
         mf_syst[is]=new TF1(Form("Fit_E_f_syst%d",is),Fit_E,0.,4000.,2);
@@ -219,7 +225,8 @@ int syst_C1(void) {
         mf_syst[is]->SetParLimits(0,-10.,10.);
         mf_syst[is]->SetParLimits(1,-10.,10.);
         
-        hTbeta_syst[is]->Fit(Form("Fit_E_f_syst%d",is),"MENQ","",E_fitmin,E_fitmax);
+        hTbeta_syst[is]->Fit(Form("Fit_E_f_syst%d",is),"MENQ","",
+                             E_fitmin,E_fitmax);
         //hTbeta_syst[is]->Fit("Fit_E_f_syst","LLMENQ","",E_fitmin,E_fitmax);
         
         A_fit=mf_syst[is]->GetParameter(0);
@@ -231,10 +238,15 @@ int syst_C1(void) {
         chi2=mf_syst[is]->GetChisquare();
         dof=mf_syst[is]->GetNDF();
         
-        cout<<setw(10)<<syst[is]<<setprecision(4)<<setw(10)<<C1_fit<<setw(10)<<err_C1_fit;
-        cout<<setw(10)<<chi2<<setw(10)<<dof<<setw(10)<<chi2/dof<<endl;
-        outfile<<setw(10)<<syst[is]<<setprecision(4)<<setw(10)<<C1_fit<<setw(10)<<err_C1_fit;
-        outfile<<setw(10)<<chi2<<setw(10)<<dof<<setw(10)<<chi2/dof<<endl;
+        cout.flags(ios::left);
+        cout << setw(11) << syst[is] << setprecision(4) 
+             << setw(11) << C1_fit 
+             << setw(11) << err_C1_fit << setw(11) << chi2 << setw(11) << dof 
+             << setw(11) << chi2/dof << endl;
+        outfile.flags(ios::left);
+        outfile << setw(11) << syst[is] << setprecision(4) << setw(11) 
+                << C1_fit << setw(11) << err_C1_fit << setw(11) << chi2 
+                << setw(11) << dof << setw(11) << chi2/dof << endl;
     }//for(int is = 0;
     
     // Display spectra
@@ -261,7 +273,7 @@ int syst_C1(void) {
     
     c1->Update();
     
-    cout << "*** THE END ***"<<endl;
+    cout  <<  "*** THE END ***" << endl;
     return(0);
 }//syst_C1(void)
 
