@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     mt19937_64 rng(seed);
     uniform_real_distribution<double> dist(0.0,1.0);
-    
+
     int numMods = 2;
     int numCh = numMods*16;
 
@@ -111,6 +111,8 @@ int main(int argc, char* argv[]) {
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn",
                            1.3e4, 0., 13.);
 
+    TH1D *test = new TH1D("test", "", 1e4, 0., 1.);
+
     TH2D *corrB = new TH2D("corr-b", "",
                            1e4, 0., 5.e3, 1e4, 0., 1e-3);
     TH2D *corrNb = new TH2D("corr-nb", "",
@@ -158,6 +160,8 @@ int main(int argc, char* argv[]) {
             mult->Fill(evt.size());
 
             for(const auto &j : evt) {
+                test->Fill(dist(rng));
+
                 double slot  = j->GetSlotID();
                 double chan = j->GetChannelID();
                 double id = CalcId(slot, chan);
@@ -179,7 +183,7 @@ int main(int argc, char* argv[]) {
                 if(i == 0 && j == evt.at(0) && it == *files.begin())
                     firstTime = time;
                 if(id == 4) {
-                    if((time - onTime)*10.e-9 > 20.) {
+                    if((time - onTime)*10.e-9 > 13.) {
                         cerr << "Oh man, we missed a beam on!! I am going to"
                              << " junk all the stored stats till now. " << endl;
                         csiE.clear();
@@ -198,9 +202,8 @@ int main(int argc, char* argv[]) {
                     offTime = time;
                 }
                 
-                if(id == 2) {
-                    //double calEn = cal.GetCsICal(en);
-                    double calEn = en;
+                if(id == 0) {
+                    double calEn = cal.GetCsICal(en);
                     ceHstgrm.at(id)->Fill(calEn);
                     if(calEn < 3500 && calEn > 500 && !hasBetaTime) {
                         betaEn = calEn;
@@ -258,6 +261,7 @@ int main(int argc, char* argv[]) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
+    test->Write();
     corre->Write();
     corrB->Write();
     corrNb->Write();
