@@ -1,6 +1,7 @@
 //*******************************************************//
 // Root macro for a Monte-Carlo fit of beta spectrum
 // Author : O. Naviliat-Cunicic
+// Modified : S. V. Paulauskas
 //*******************************************************//
 // Math constants
 const double pi=TMath::Pi();
@@ -39,7 +40,7 @@ int syst_C1(void) {
     // Book histograms
     int nCHAN=4000;
     double cMIN=0.,cMAX=4000.;
-    for(int ib=0; ib<3; ib++)
+    for(int ib = 0; ib < 3; ib++)
         hTbeta[ib] = new TH1F(Form("hTbeta_%s",C1_typ[ib]), 
                               Form("hTbeta_%s",C1_typ[ib]),
                               nCHAN,cMIN,cMAX);
@@ -62,16 +63,15 @@ int syst_C1(void) {
     T_min[0]=0.200;
     T_min[1]=0.200;
     
-    double E_rms_1MeV[2],E_rms_0MeV[2],syst[NSYST],delta_E_rms,rms;
-    E_rms_1MeV[0]=0.04;
-    E_rms_1MeV[1]=0.04;
-    delta_E_rms=0.002;
-    E_rms_0MeV[0]=0.01;
-    E_rms_0MeV[1]=0.01;
+    double E_rms_1MeV[2], E_rms_0MeV[2], syst[NSYST], delta_E_rms, rms;
+    //Setting energy resolutions?
+    E_rms_1MeV[0] = 0.04;
+    E_rms_1MeV[1] = 0.04;
+    delta_E_rms   = 0.002;
+    E_rms_0MeV[0] = 0.01;
+    E_rms_0MeV[1] = 0.01;
     
-    double MAXEVTS[2];
-    MAXEVTS[0]=1.0e5;
-    MAXEVTS[1]=5.0e6;
+    double MAXEVTS[2] = {1.e5, 5.e6};
     int MODULO_print = MAXEVTS[0]/10.;
     
     // Calculate the size of a systematic effect to be implemented
@@ -90,16 +90,16 @@ int syst_C1(void) {
     for(int ib = 0; ib < 2; ib++) {
         // the second loop generates the spectrum for the Monte-Carlo fit
         for(int nevts = 1; nevts < MAXEVTS[ib]+1; nevts++) {	
-            double ftir=FMAX;
-            double fres=0.;
+            double ftir = FMAX;
+            double fres = 0.;
             
             // Generate kinematic variables following the beta spectrum
-            while(ftir>fres) {
+            while(ftir > fres) {
                 // (this neglects the energy of the recoiling nucleus)
                 ftir = gRandom->Rndm()*FMAX;
                 Te = gRandom->Rndm()*Qb;
                 
-                pe = sqrt(Te*Te+2.*me*Te);
+                pe = sqrt(Te * Te + 2. * me * Te);
                 E = Te + me;
                 fres = pe * E * pow(Qb-Te,2.) * (1. + C1[ib]*E);
             } // got a new valid event
@@ -112,7 +112,7 @@ int syst_C1(void) {
             // Transform physical value to channel number
             // Energy calibration
             Double_t Te_chan;
-            Te_chan=Acal*Te + Bcal;
+            Te_chan = Acal * Te + Bcal;
             
             // Detector response function
             // rms=sqrt( Te_chan*E_rms_1MeV[ib]*E_rms_1MeV[ib] + 
@@ -187,13 +187,13 @@ int syst_C1(void) {
     int nbBins=hTbeta[0]->GetNbinsX();
     double binVal,Etot;
     for(int i=1; i<nbBins+1; i++) {
-        // Convert channel number to toal energy
+        // Convert channel number to total energy
         Etot = hTbeta[1]->GetBinCenter(i)/1000. + me;
         binVal = A_fit*hTbeta[1]->GetBinContent(i)*(1.+C1_fit*Etot);
         hTbeta[2]->SetBinContent(i,binVal);
     }
     
-    ////////Calcul des différences exp-sim
+    //Calcul des différences exp-sim
     hTbeta_diff[0]->Add(hTbeta[0],1.);
     hTbeta_diff[0]->Add(hTbeta[1],-A_fit);
     hTbeta_diff[1]->Add(hTbeta[1],A_fit);
@@ -277,7 +277,7 @@ int syst_C1(void) {
     return(0);
 }//syst_C1(void)
 
-//*******************************************************************************************//
+//*************************************************//
 // Fit function
 Double_t Fit_E(Double_t *x, Double_t *par)
 {
@@ -287,7 +287,7 @@ Double_t Fit_E(Double_t *x, Double_t *par)
     c_bsim=hTbeta[1]->GetBinContent(z);
     
     // Convert channel number to total energy
-    Double_t Etot=x[0]/Acal + me;
-    return( par[0]*c_bsim*(1. + par[1]*Etot) );
+    Double_t Etot = x[0]/Acal + me;
+    return( par[0] * c_bsim * (1. + par[1]*Etot) );
 }
-//*******************************************************************************************//
+//*************************************************//

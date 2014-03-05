@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
         TH1D *eHist  = new TH1D(eName.str().c_str(), eTitle.str().c_str(),
                                 65536, 0., 32768);
         TH1D *tHist  = new TH1D(tName.str().c_str(), tTitle.str().c_str(),
-                                5000, 0., 5000.);
+                                65536, 0., 32768.);
 
         ceHstgrm.insert(make_pair(i,ceHist));
         eHstgrm.insert(make_pair(i, eHist));
@@ -110,16 +110,14 @@ int main(int argc, char* argv[]) {
                             5.e6, 0., 5.e3);
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn",
                            1.3e4, 0., 13.);
-
-    TH1D *test = new TH1D("test", "", 1e4, 0., 1.);
-
+    
+    //TH2D *deadT = new TH2D("deadtime", "", 63356, 0.0, 32768., 10, 0., 1.0);
     TH2D *corrB = new TH2D("corr-b", "",
                            1e4, 0., 5.e3, 1e4, 0., 1e-3);
     TH2D *corrNb = new TH2D("corr-nb", "",
                             1e4, 0., 5.e3, 1e4, 0., 1e-3);
     TH2D *corre = new TH2D("corre", "",
                             1e4, 0., 5.e3, 1e4, 0., 5.e3);
-    
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy",
                               "Time vs Energy Spectrum for M0C0",
                               1e4, 0., 5.e3, 1.3e4, 0., 1.3e1);
@@ -131,6 +129,7 @@ int main(int argc, char* argv[]) {
     //initialize some of the times
     double firstTime = 0, onTime = 0, offTime = 0, csiTime = 0, 
         betaTime = 0, nonBetaTime = 0, betaEn = 0, nonBetaEn = 0;
+    //double bufEndTime = 0.;
 
     bool hasBetaTime = false, hasNonBetaTime = false;
 
@@ -151,7 +150,7 @@ int main(int argc, char* argv[]) {
         DDASEvent *event = new DDASEvent();
         br->SetAddress(&event);
         int numEvent = tr->GetEntries();
-        
+
         for (int i = 0; i < numEvent; i++) {
             //if(i == 1000)
             //    break;
@@ -160,8 +159,6 @@ int main(int argc, char* argv[]) {
             mult->Fill(evt.size());
 
             for(const auto &j : evt) {
-                test->Fill(dist(rng));
-
                 double slot  = j->GetSlotID();
                 double chan = j->GetChannelID();
                 double id = CalcId(slot, chan);
@@ -169,15 +166,24 @@ int main(int argc, char* argv[]) {
                 double time = j->GetTime();
                 
                 hits->Fill(id);
-                
-                //Continue through event if the id is not in the used list
-                if(usdIds.find(id) == usdIds.end())
-                    continue;
-                
+
                 //caluclate the Run Time in seconds.
                 double runTime = (time - firstTime)*10.e-9;
                 double timeBoff = (time - offTime)*10.e-9;
                 double timeBon = (time - onTime)*10.e-9;
+                
+                //Stuff for the dead time calc, may not work right
+                // if(j == evt.front()) {
+                //     double deadTime = 
+                //         (time - bufEndTime)*10.e-9;
+                //     deadT->Fill(runTime, 0.0, deadTime);
+                // }
+                // if(j == evt.back())
+                //     bufEndTime = time;
+                
+                //Continue through event if the id is not in the used list
+                if(usdIds.find(id) == usdIds.end())
+                    continue;
                 
                 //set the various times
                 if(i == 0 && j == evt.at(0) && it == *files.begin())
@@ -261,7 +267,7 @@ int main(int argc, char* argv[]) {
         eHstgrm.at(id)->Write();
         tHstgrm.at(id)->Write();
     }
-    test->Write();
+    //deadT->Write();
     corre->Write();
     corrB->Write();
     corrNb->Write();
