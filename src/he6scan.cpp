@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
                             1e4, 0., 5.e3, 1e4, 0., 5.e3);
     TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy",
                               "Time vs Energy Spectrum for M0C0",
-                              1e4, 0., 5.e3, 1.3e4, 0., 1.3e1);
+                              1.6e4, 0., 8.e3, 1.3e3, 0., 1.3e1);
     TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy",
                               "Time vs Cal Energy Spectrum for M1C0",
                               1e4, 0., 5.e3, 1.3e4, 0., 13.);

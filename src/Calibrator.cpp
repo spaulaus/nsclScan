@@ -17,16 +17,6 @@ double Calibrator::GetCsICal(const double &raw) {
     double b = -8.06648;
 
     return(m*raw+b);
-    //Gain +900 V - calibrated from bkg lines
-    // double m = 3.19243;
-    // double b = -21.8969;
-    // double c = 0.00;
-
-    //Gain +860 V
-    // double m = 0.532437;
-    // double b = 32.287;
-    // double c = -1.32692e-7;
-    // return(c*raw*raw+m*raw+b);
 }
 
 
