@@ -187,8 +187,8 @@ int main(int argc, char* argv[]) {
                     }
                     onTime = time;
                     for(unsigned int i = 0; i < csiE.size(); i++) {
-                        etHstgrm->Fill(csicE.at(i), csiT.at(i));
-                        cetHstgrm->Fill(csiE.at(i), csiT.at(i));
+                        etHstgrm->Fill(csiE.at(i), csiT.at(i));
+                        cetHstgrm->Fill(csicE.at(i), csiT.at(i));
                     }
                     csicE.clear();
                     csiE.clear();

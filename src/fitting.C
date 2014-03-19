@@ -67,12 +67,11 @@ double FermiFunc(const double &e) {
 Double_t FitFunc(Double_t *x, Double_t *par) {
     double A = par[0];
     double a = par[1];
-    double Q = par[2]/me;
-    double E = x[0]/me;
-    double W = E + 1;
+    double Q = par[2];
+    double E = x[0];
 
     //----------- MOMENTUM AND TOTAL ENERGY OF ELECTRON -----------
-    double p  = sqrt(W*W - 1);
+    double p  = sqrt(E*E + 2 * me * E);
 
     //---------- SHAPE FACTOR ----------
     double shape = 1. + a * E;
@@ -80,13 +79,13 @@ Double_t FitFunc(Double_t *x, Double_t *par) {
     if(E > Q) 
         return(0.);
     else
-        return(A * FermiFunc(E*me) * p * W * pow(Q - E, 2) * shape);
+        return(A * FermiFunc(E) * p * E * pow(Q - E, 2) * shape);
 }
 
 //---------- BEGIN THE MAIN FITTING ROUTINE ---------
 int fitting(void) {
     //The 2d histogram for the projections
-    TH2D *primHist = (TH2D*)file.Get("csI:large:0:TimeEnergy");
+    TH2D *primHist = (TH2D*)file.Get("csI:large:0:TimeCalEnergy");
     
     //---------- The waiting period ---------
     TH1D *tw = (TH1D*)primHist->ProjectionX("tw",250,499);
@@ -105,16 +104,16 @@ int fitting(void) {
     //---------- DEFINE FITTING FUNCTION AND DO THE FIT ----------
     TF1 *mf=new TF1("Func", FitFunc, fLow, fHigh, 3);
     
-    double ampInit   = 1.0;
-    double c1Init    = 0.1;
-    double endptInit = 6300;
+    double ampInit   = 3.0e-11;
+    double c1Init    = 1e-5;
+    double endptInit = 3505;
 
     mf->SetParameters(ampInit, c1Init, endptInit);
     mf->SetParLimits(1, 1e-19, 1e6);
     mf->SetParLimits(1, -10, 10);
     mf->SetParLimits(2, 0., 1e6);
     
-    bool doFit = true;
+    bool doFit = false;
     if(doFit) {
         cout << endl << "Fit with MEN... *chuckle*" << endl;
         sub1->Fit("Func", "MEN", "", fLow, fHigh);
