@@ -13,43 +13,74 @@
 // Physics constants
 const double me = 510.998910; // keV/c/c;
 
-const double fLow = 500, fHigh = 4000;
+const double fLow = 500, fHigh = 5000;
 
 // Energy calibration coefficients
 //double Acal = 0.558823;
 //double Bcal = -8.06648;
 
+double FermiFunc(const double &e) {
+    double z = 3;
+    //Expects energy in kev
+    //Some tabulated values for the function
+    double m[8][11] = {
+        //Values for Electron Decay
+        {1, .3269, -.12948, .019016, -.00095348, 0, .0272646, -.0004201, -9.5474E-6, 0, 0}, 
+        {10, 2.08738, -.57928, .0404785, .00305364, -.000334, .11416, .043251, -.0033661, 0, 0}, 
+        {20, 2.80848, -.404105, -.068659, .019067, -.0010833, .127189, .128762, -.010038, 0, 0}, 
+        {30, 3.33244, -.300744, -.11193, .023452, -.0012114, .083368, .244539, -.019246, 0, 0}, 
+        {50, 4.38334, -.319865, -.091311, .016894, -.0007709, .047726, .515291, -.0424, 0, 0}, 
+        {70, 5.51184, -.38239, -.058665, .0107613, -.000491881, .515219, .738253, -.066362, 0, 0}, 
+        {90, 6.76374, -.41807, -.042962, .0086018, -.00051951, 2.52482, .66674, -.076984, 0, 0}, 
+        {100, 7.4614, -.437171, -.035496, .0077881, -.00057477, 4.4908, .42503, -.071491, 0, 0} };
+
+    int g;
+    if(e > 2000)
+        g = 5.;
+    else
+        g = 0.;
+
+    int idx;
+    for(int i = 0; i < 8; i++) {
+        if( (m[i+1][0] - z) >= 0) {
+            idx = i;
+            break;
+        }
+    }
+    
+    double y[8];
+    for(int j = idx; j <= idx+1; j++) {
+        y[j] = exp(m[j][1 + g] + 
+                   m[j][2 + g] * log(e) + 
+                   m[j][3 + g] * pow(log(e),2) + 
+                   m[j][4 + g] * pow(log(e),3) + 
+                   m[j][5 + g] * pow(log(e),4) );
+    }
+    double f = exp(log(y[idx]) + 
+                   ( z - m[idx][0] ) * 
+                   ( log(y[idx + 1]) - log(y[idx]) ) / 
+                   ( m[idx + 1][0] - m[idx][0] ) );
+    return(f);
+}
+
 //---------- FITTING FUNCTION ----------
 Double_t FitFunc(Double_t *x, Double_t *par) {
-    double amp   = par[0];
-    double c1    = par[1];
-    double endPt = par[2];
-    double betaE = x[0];
+    double A = par[0];
+    double a = par[1];
+    double Q = par[2]/me;
+    double E = x[0]/me;
+    double W = E + 1;
 
     //----------- MOMENTUM AND TOTAL ENERGY OF ELECTRON -----------
-    double betaMom  = sqrt(betaE * betaE + 2. * me * betaE);
-    double E = betaE + me;
+    double p  = sqrt(W*W - 1);
 
-    const double z = 3;
-    double coeff[4][4] = { {-17.2, 7.9015, -2.54, 0.28482,}, 
-                           {3.31368, -2.06273, 0.703822, -0.075039,}, 
-                           {-0.364018, 0.387961, -0.142528, 0.016,},
-                           {0.0278071, -0.026519, 0.0098854, -0.00113772} };
-    double evalCoeff[4];
-    for(int i = 0; i < 4; i++)
-        evalCoeff[i] = coeff[i][0] + log(z) * coeff[i][1] + 
-            coeff[i][2]*pow(log(z),2.) + coeff[i][3]*pow(log(z),3.);
-    double logf = evalCoeff[0] + evalCoeff[1]*log(endPt) + 
-        evalCoeff[2]*pow(log(endPt),2.) + evalCoeff[3]*pow(log(endPt),3.);
-    double f = pow(10,logf);
-    
     //---------- SHAPE FACTOR ----------
-    double shape = 1. + c1 * E;
+    double shape = 1. + a * E;
 
-    if(E > endPt) 
+    if(E > Q) 
         return(0.);
     else
-        return(amp * (1/f) * betaMom * E * pow(endPt - E, 2) * shape);
+        return(A * FermiFunc(E*me) * p * W * pow(Q - E, 2) * shape);
 }
 
 //---------- BEGIN THE MAIN FITTING ROUTINE ---------
@@ -58,28 +89,28 @@ int fitting(void) {
     TH2D *primHist = (TH2D*)file.Get("csI:large:0:TimeEnergy");
     
     //---------- The waiting period ---------
-    TH1D *tw = (TH1D*)primHist->ProjectionX("tw",2500,4999);
+    TH1D *tw = (TH1D*)primHist->ProjectionX("tw",250,499);
     
     //---------- The various projections ---------
-    TH1D *s1 = (TH1D*)primHist->ProjectionX("s1",5000,5999);
-    TH1D *s2 = (TH1D*)primHist->ProjectionX("s2",6000,8749);
-    TH1D *b2 = (TH1D*)primHist->ProjectionX("b2",8750,11499);
-    TH1D *b1 = (TH1D*)primHist->ProjectionX("b1",11500,12499);
+    TH1D *s1 = (TH1D*)primHist->ProjectionX("s1",500,599);
+    TH1D *s2 = (TH1D*)primHist->ProjectionX("s2",600,874.9);
+    TH1D *b2 = (TH1D*)primHist->ProjectionX("b2",875,1149.9);
+    TH1D *b1 = (TH1D*)primHist->ProjectionX("b1",1150,1249.9);
     
-    TH1D *sub1 = new TH1D ("sub1", "", 1e4, 0., 5.e3);
+    TH1D *sub1 = new TH1D ("sub1", "", 1.6e4, 0., 8.e3);
     sub1->Add(s1,b1,1,-1);
-    TH1D *sub2 = new TH1D ("sub2", "", 1e4, 0., 5.e3);
+    TH1D *sub2 = new TH1D ("sub2", "", 1.6e4, 0., 8.e3);
     sub2->Add(s2,b2,1,-1);
     
     //---------- DEFINE FITTING FUNCTION AND DO THE FIT ----------
     TF1 *mf=new TF1("Func", FitFunc, fLow, fHigh, 3);
     
-    double ampInit   = 2.27e-11;
-    double c1Init    = -2.526e-4;
-    double endptInit = 4483.94;
+    double ampInit   = 1.0;
+    double c1Init    = 0.1;
+    double endptInit = 6300;
 
     mf->SetParameters(ampInit, c1Init, endptInit);
-    mf->SetParLimits(1, 1e-19, 10);
+    mf->SetParLimits(1, 1e-19, 1e6);
     mf->SetParLimits(1, -10, 10);
     mf->SetParLimits(2, 0., 1e6);
     
@@ -101,9 +132,9 @@ int fitting(void) {
         cout << "chi2/dof = " << mf->GetChisquare() / mf ->GetNDF() << endl;
         cout << "***************************" << endl << endl;
     }else
-        cout << "Not performing the fit simply printing the function" 
+        cout << "Not performing the fit simply printing the function " 
              << "with the following values: " << endl << "amp = " 
-             << amp << endl << "c1 = " << c1Init << endl << " EndPoint = "
+             << ampInit << endl << "c1 = " << c1Init << endl << " EndPoint = "
              << endptInit << endl;
             
     

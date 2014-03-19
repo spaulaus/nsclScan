@@ -111,32 +111,30 @@ int main(int argc, char* argv[]) {
     TH1D *oHist = new TH1D("csI:large:0:dtOn", "Tdiff w BeamOn",
                            1.3e4, 0., 13.);
     
-    //TH2D *deadT = new TH2D("deadtime", "", 63356, 0.0, 32768., 10, 0., 1.0);
     TH2D *corrB = new TH2D("corr-b", "",
                            1e4, 0., 5.e3, 1e4, 0., 1e-3);
     TH2D *corrNb = new TH2D("corr-nb", "",
                             1e4, 0., 5.e3, 1e4, 0., 1e-3);
     TH2D *corre = new TH2D("corre", "",
                             1e4, 0., 5.e3, 1e4, 0., 5.e3);
-    TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy",
-                              "Time vs Energy Spectrum for M0C0",
+    TH2D *etHstgrm = new TH2D("csI:large:0:TimeEnergy", "",
                               1.6e4, 0., 8.e3, 1.3e3, 0., 1.3e1);
-    TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy",
-                              "Time vs Cal Energy Spectrum for M1C0",
+    TH2D *cetHstgrm = new TH2D("csI:large:0:TimeCalEnergy", "",
+                              1.6e4, 0., 8.e3, 1.3e3, 0., 1.3e1);
+    TH2D *gtHstgrm = new TH2D("ge:ignore:0:TimeEnergy", "", 
                               1e4, 0., 5.e3, 1.3e4, 0., 13.);
     //---------- END HISTOGRAM DEFINITIONS ---------
 
     //initialize some of the times
     double firstTime = 0, onTime = 0, offTime = 0, csiTime = 0, 
         betaTime = 0, nonBetaTime = 0, betaEn = 0, nonBetaEn = 0;
-    //double bufEndTime = 0.;
 
     bool hasBetaTime = false, hasNonBetaTime = false;
 
     //How many cycles should we ignore for the missing data chunks?
     int numCycles = 4, cycleCount = 0;
 
-    vector<double> csiE, csiT;
+    vector<double> csicE, csiE, csiT;
 
     for(const auto &it : files) {
         cout << "We are working on the following file, boss. " << endl
@@ -172,15 +170,6 @@ int main(int argc, char* argv[]) {
                 double timeBoff = (time - offTime)*10.e-9;
                 double timeBon = (time - onTime)*10.e-9;
                 
-                //Stuff for the dead time calc, may not work right
-                // if(j == evt.front()) {
-                //     double deadTime = 
-                //         (time - bufEndTime)*10.e-9;
-                //     deadT->Fill(runTime, 0.0, deadTime);
-                // }
-                // if(j == evt.back())
-                //     bufEndTime = time;
-                
                 //Continue through event if the id is not in the used list
                 if(usdIds.find(id) == usdIds.end())
                     continue;
@@ -192,12 +181,16 @@ int main(int argc, char* argv[]) {
                     if((time - onTime)*10.e-9 > 13.) {
                         cerr << "Oh man, we missed a beam on!! I am going to"
                              << " junk all the stored stats till now. " << endl;
+                        csicE.clear();
                         csiE.clear();
                         csiT.clear();
                     }
                     onTime = time;
-                    for(unsigned int i = 0; i < csiE.size(); i++)
-                        etHstgrm->Fill(csiE.at(i), csiT.at(i));
+                    for(unsigned int i = 0; i < csiE.size(); i++) {
+                        etHstgrm->Fill(csicE.at(i), csiT.at(i));
+                        cetHstgrm->Fill(csiE.at(i), csiT.at(i));
+                    }
+                    csicE.clear();
                     csiE.clear();
                     csiT.clear();
                     
@@ -239,7 +232,8 @@ int main(int argc, char* argv[]) {
                             
                             bHist->Fill(timeBoff);
                             oHist->Fill(timeBon);
-                            csiE.push_back(calEn);
+                            csiE.push_back(en);
+                            csicE.push_back(calEn);
                             csiT.push_back(timeBon);
                         }
                     }
@@ -278,6 +272,7 @@ int main(int argc, char* argv[]) {
     oHist->Write();
     tdiff->Write();
     tHist1->Write();
+    cetHstgrm->Write();
     etHstgrm->Write();
     gtHstgrm->Write();
     outF.Write();
