@@ -105,7 +105,7 @@ int fitting(void) {
     TF1 *mf=new TF1("Func", FitFunc, fLow, fHigh, 3);
     
     double ampInit   = 3.0e-11;
-    double c1Init    = 1e-5;
+    double c1Init    = 1e-4;
     double endptInit = 3505;
 
     mf->SetParameters(ampInit, c1Init, endptInit);
@@ -113,7 +113,7 @@ int fitting(void) {
     mf->SetParLimits(1, -10, 10);
     mf->SetParLimits(2, 0., 1e6);
     
-    bool doFit = false;
+    bool doFit = true;
     if(doFit) {
         cout << endl << "Fit with MEN... *chuckle*" << endl;
         sub1->Fit("Func", "MEN", "", fLow, fHigh);
@@ -132,8 +132,8 @@ int fitting(void) {
         cout << "***************************" << endl << endl;
     }else
         cout << "Not performing the fit simply printing the function " 
-             << "with the following values: " << endl << "amp = " 
-             << ampInit << endl << "c1 = " << c1Init << endl << " EndPoint = "
+             << "with the following values: " << endl << "A = " 
+             << ampInit << endl << "a = " << c1Init << endl << "Q = "
              << endptInit << endl;
             
     
