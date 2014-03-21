@@ -9,22 +9,19 @@
  * \author S. V. Paulauskas
  * \date 03-12-2014
  */
+//---------- Specify the file to be worked on ----------
+TFile file("data/test/test00.root");
 
-// Physics constants
+//---------- Physics constants ----------
 const double me = 510.998910; // keV/c/c;
+const double z = 3;
 
+//---------- The fitting region ----------
 const double fLow = 500, fHigh = 5000;
 
-// Energy calibration coefficients
-//double Acal = 0.558823;
-//double Bcal = -8.06648;
-
 double FermiFunc(const double &e) {
-    double z = 3;
     //Expects energy in kev
-    //Some tabulated values for the function
     double m[8][11] = {
-        //Values for Electron Decay
         {1, .3269, -.12948, .019016, -.00095348, 0, .0272646, -.0004201, -9.5474E-6, 0, 0}, 
         {10, 2.08738, -.57928, .0404785, .00305364, -.000334, .11416, .043251, -.0033661, 0, 0}, 
         {20, 2.80848, -.404105, -.068659, .019067, -.0010833, .127189, .128762, -.010038, 0, 0}, 
