@@ -69,6 +69,7 @@ Double_t FitFunc(Double_t *x, Double_t *par) {
     double a = par[1];
     double Q = par[2];
     double E = x[0];
+    double W = E + me;
 
     //----------- MOMENTUM AND TOTAL ENERGY OF ELECTRON -----------
     double p  = sqrt(E*E + 2 * me * E);
@@ -79,7 +80,7 @@ Double_t FitFunc(Double_t *x, Double_t *par) {
     if(E > Q) 
         return(0.);
     else
-        return(A * FermiFunc(E) * p * E * pow(Q - E, 2) * shape);
+        return(A * FermiFunc(E) * p * W * pow(Q - E, 2) * shape);
 }
 
 //---------- BEGIN THE MAIN FITTING ROUTINE ---------
