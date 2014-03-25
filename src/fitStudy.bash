@@ -17,6 +17,7 @@ do
         sed '19c\'"$newRange" $file > $tmp
         mv $tmp $file
         echo -e "We are working on fitting range : $i $j\n"
-        root -b $file
+        root -b $file > /dev/null
     done
+    echo -e "\n" >> data/fitstudy/nocal-wF.dat
 done
