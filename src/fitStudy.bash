@@ -6,6 +6,7 @@ step=100
 
 file="src/fitting.C"
 tmp="src/tmp.C"
+log="fitStudy.log"
 
 for i in `seq $lowInit 100 1000`
 do
@@ -14,10 +15,11 @@ do
     do
         hi=$j
         newRange="const double fLow = $low, fHigh = $hi;"
-        sed '19c\'"$newRange" $file > $tmp
+        sed '20c\'"$newRange" $file > $tmp
         mv $tmp $file
         echo -e "We are working on fitting range : $i $j\n"
-        root -b $file > /dev/null
+        echo -e "We are working on fitting range : $i $j\n" >> fitStudy.log
+        root -b $file > /dev/null &2>> fitStudy.log
     done
-    echo -e "\n" >> data/fitstudy/nocal-wF.dat
+    echo -e "\n" >> data/fitstudy/cal-wF.dat
 done

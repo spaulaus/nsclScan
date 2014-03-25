@@ -112,6 +112,7 @@ int fitting(void) {
     mf->SetParLimits(2, 0., 1e6);
     
     bool doFit = true;
+    bool doOutput = true;
     if(doFit) {
         cout << endl << "Fit with MEN... *chuckle*" << endl;
         sub1->Fit("Func", "MEN", "", fLow, fHigh);
@@ -128,6 +129,24 @@ int fitting(void) {
         cout << "dof= " << mf->GetNDF() << endl;
         cout << "chi2/dof = " << mf->GetChisquare() / mf ->GetNDF() << endl;
         cout << "***************************" << endl << endl;
+
+        if(doOutput) {
+            ofstream out("/projects/e13504/Analysis/svp/data/fitstudy/cal-wF.dat",
+                         ios::app);
+            out << fLow << " " << fHigh << " " 
+                << mf->GetParameter(0) << " " 
+                << mf->GetParError(0) << " " 
+                << mf->GetParameter(1) << " " 
+                << mf->GetParError(1) << " " 
+                << mf->GetParameter(2) << " " 
+                << mf->GetParError(2) << " " 
+                << mf->GetParameter(3) << " " 
+                << mf->GetParError(3) << " " 
+                << mf->GetChisquare() << " " 
+                << mf->GetNDF() << " "
+                << mf->GetChisquare()/mf->GetNDF() << endl;
+            out.close();
+        }
     }else
         cout << "Not performing the fit simply printing the function " 
              << "with the following values: " << endl << "A = " 
@@ -136,15 +155,15 @@ int fitting(void) {
             
     
     //---------- DISPLAY SPECTRA -----------
-    TCanvas *c8=new TCanvas("c8","Results-1");
-    c8->Clear();
-    c8->cd();
+    // TCanvas *c8=new TCanvas("c8","Results-1");
+    // c8->Clear();
+    // c8->cd();
     
-    sub1->SetAxisRange(fLow,fHigh,"X");
-    sub1->Draw();
-    mf->SetLineColor(2);
-    mf->Draw("same");
-    c8->Update();
+    // sub1->SetAxisRange(fLow,fHigh,"X");
+    // sub1->Draw();
+    // mf->SetLineColor(2);
+    // mf->Draw("same");
+    // c8->Update();
 
     cout  <<  "*** THE END ***" << endl;
     return(0);
