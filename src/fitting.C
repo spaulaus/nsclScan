@@ -16,8 +16,8 @@ TFile file("data/test/test00.root");
 const double me = 510.998910; // keV/c/c;
 
 //---------- The fitting region ----------
-const double fLow = 300, fHigh = 2600;
-const double fLow = 1000, fHigh = 7500;
+const double fLow = 300, fHigh = 2300;
+
 double FermiFunc(const double &e) {
     const double z = 3;
 
