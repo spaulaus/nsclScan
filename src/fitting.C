@@ -14,12 +14,13 @@ TFile file("data/test/test00.root");
 
 //---------- Physics constants ----------
 const double me = 510.998910; // keV/c/c;
-const double z = 3;
 
 //---------- The fitting region ----------
-const double fLow = 500, fHigh = 5000;
-
+const double fLow = 200, fHigh = 3200;
+const double fLow = 1000, fHigh = 7500;
 double FermiFunc(const double &e) {
+    const double z = 3;
+
     //Expects energy in kev
     double m[8][11] = {
         {1, .3269, -.12948, .019016, -.00095348, 0, .0272646, -.0004201, -9.5474E-6, 0, 0}, 
@@ -111,8 +112,8 @@ int fitting(void) {
     mf->SetParLimits(1, -10, 10);
     mf->SetParLimits(2, 0., 1e6);
     
-    bool doFit = true;
-    bool doOutput = true;
+    bool doFit = false;
+    bool doOutput = false;
     if(doFit) {
         cout << endl << "Fit with MEN... *chuckle*" << endl;
         sub1->Fit("Func", "MEN", "", fLow, fHigh);
@@ -155,17 +156,18 @@ int fitting(void) {
             
     
     //---------- DISPLAY SPECTRA -----------
-    // TCanvas *c8=new TCanvas("c8","Results-1");
-    // c8->Clear();
-    // c8->cd();
+    TCanvas *c8=new TCanvas("c8","Results-1");
+    c8->Clear();
+    c8->cd();
     
-    // sub1->SetAxisRange(fLow,fHigh,"X");
-    // sub1->Draw();
-    // mf->SetLineColor(2);
-    // mf->Draw("same");
-    // c8->Update();
+    sub1->SetAxisRange(fLow,fHigh,"X");
+    sub1->Draw();
+    mf->SetLineColor(2);
+    mf->Draw("same");
+    c8->Update();
 
     cout  <<  "*** THE END ***" << endl;
-    return(0);
+    //return(0);
+    exit(0);
 }
 
