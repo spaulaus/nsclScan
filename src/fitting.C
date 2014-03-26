@@ -16,7 +16,7 @@ TFile file("data/test/test00.root");
 const double me = 510.998910; // keV/c/c;
 
 //---------- The fitting region ----------
-const double fLow = 200, fHigh = 3200;
+const double fLow = 300, fHigh = 2600;
 const double fLow = 1000, fHigh = 7500;
 double FermiFunc(const double &e) {
     const double z = 3;
@@ -73,7 +73,7 @@ Double_t FitFunc(Double_t *x, Double_t *par) {
     double p  = sqrt(E*E + 2 * me * E);
 
     //---------- SHAPE FACTOR ----------
-    double shape = 1. + a * E;
+    double shape = 1. + a * W;
 
     if(E > Q) 
         return(0.);
@@ -112,8 +112,8 @@ int fitting(void) {
     mf->SetParLimits(1, -10, 10);
     mf->SetParLimits(2, 0., 1e6);
     
-    bool doFit = false;
-    bool doOutput = false;
+    bool doFit = true;
+    bool doOutput = true;
     if(doFit) {
         cout << endl << "Fit with MEN... *chuckle*" << endl;
         sub1->Fit("Func", "MEN", "", fLow, fHigh);
