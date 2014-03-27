@@ -20,13 +20,13 @@ CINCLUDEDIRS = -Iinc -I$(DUMPER)/
 c++SrcSuf = cpp
 
 #Set the name of the program to be compiled
-PROGRAM = he6scan
+PROGRAM = scan
 
 #Define Objects
 CALIBRATORO	 = Calibrator.o
 DETECTORLIBRARYO = DetectorLibrary.o
 IDENTIFIERO      = Identifier.o
-MAINO            = he6scan.o
+MAINO            = main.o
 MAPFILEO         = MapFile.o
 
 #Make the object list and prefix the object directory
