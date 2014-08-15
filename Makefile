@@ -4,6 +4,9 @@ SHELL=/bin/bash
 #If you want RooFit functionality uncomment the following line
 #USEROOFIT = 1
 
+#If you want to use RevD use this flag
+#REVD=1
+
 #path for ddasdumper
 DUMPER=/user/paulausk/programs/ddasdumper
 
@@ -19,6 +22,10 @@ LDLIBS = -ldl -lpthread -L$(DUMPER) -lddaschannel
 CINCLUDEDIRS = -Iinc -I$(DUMPER)/
 c++SrcSuf = cpp
 
+ifeq ($(REVD),1)
+CXXFLAGS += -Drevd
+endif
+
 #Set the name of the program to be compiled
 PROGRAM = scan
 
@@ -28,9 +35,11 @@ DETECTORLIBRARYO = DetectorLibrary.o
 IDENTIFIERO      = Identifier.o
 MAINO            = main.o
 MAPFILEO         = MapFile.o
+TRACEO           = Trace.o
 
 #Make the object list and prefix the object directory
-OBJS = $(CALIBRATORO) $(DETECTORLIBRARYO) $(IDENTIFIERO) $(MAINO) $(MAPFILEO)
+OBJS = $(CALIBRATORO) $(DETECTORLIBRARYO) $(IDENTIFIERO) $(MAINO) $(MAPFILEO) 
+OBJS += $(TRACEO)
 
 OBJDIR = obj
 OBJS_W_DIR = $(addprefix $(OBJDIR)/,$(OBJS))

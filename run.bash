@@ -7,8 +7,8 @@
 #----------------------------------------
 
 #---------- Some default values ----------
-rawLoc="fls"
-outLoc="data"
+rawLoc="/mnt/daqtesting/funix/processed"
+outLoc="/mnt/daqtesting/funix/scanned"
 
 log="scan.log"
 if [ -f $log ]
@@ -27,9 +27,17 @@ function usage {
     echo -e "-t VAR : specify that this is a testing file where VAR is the number"
 }
 
-while getopts f:o:l:r:t: opt
+while getopts f:o:l:r:t:m opt
 do 
     case $opt in 
+        m)
+            make clean
+            if ! make
+            then
+                echo -e "\n The compilation failed. You may want to check that."
+                exit 1
+            fi
+            ;;
         f)
             rawLoc=$OPTARG
             ;;
@@ -45,7 +53,7 @@ do
         t)
             testNum=$OPTARG
             testRun="true"
-            outLoc+="test"
+            outLoc+="/test"
             ;;
         \?)
             usage
@@ -95,7 +103,7 @@ else
     read ans
     case $ans in
         [yY]* )
-            echo "Autobots....roll out!"
+            echo -e "\n\nAutobots....roll out!\n\n"
             ;;
         [nN]* )
             echo -e "Well, I suggest you restart! Exiting..."
@@ -103,20 +111,29 @@ else
             ;;
         *) 
             echo "Invalid answer, use y or n"
+            exit 1
             ;;
     esac
 fi
 
 for i in $runList
 do
-    if [ $testRun -e "true" ]
+    if [ `ls $rawLoc/run$i/*.root 2>/dev/null` ]
+    then
+        echo -e "Found the input files, proceeding.\n\n"
+    else
+        echo -e "I could not find the input files: $rawLoc/run$i/*.root"
+        continue
+    fi        
+
+    if [ "$testRun" = "true" ]
     then
         if [ ! -d "$outLoc" ]
         then
             echo "Created folder: $outLoc" >> $log
             mkdir $outLoc
         fi
-        ./he6scan $rawLoc/run$i/*.root $outLoc/test$testNum.root
+        ./scan $rawLoc/run$i/*.root $outLoc/test$testNum.root
         
     else
         if [ ! -d "$outLoc/run$i" ]
@@ -132,7 +149,7 @@ do
             echo "$name Exists! Skipping...." >> $log
         else
             echo "Created : $name" >> $log
-            ./he6scan $rawLoc/run$i/*.root $name
+            ./scan $rawLoc/run$i/*.root $name
         fi
     fi
 done
